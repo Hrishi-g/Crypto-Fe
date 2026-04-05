@@ -1,0 +1,16 @@
+.btn-market{
+    background-color: transparent;
+    color: white;
+    border: none;
+    font-size: 1.1rem;
+    padding: 0.5rem 0.8rem;
+    cursor: pointer;
+    border-radius: 10px;
+    font-family: var(--font-main);
+    box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-market:hover{
+    color: #6366f1;
+}
