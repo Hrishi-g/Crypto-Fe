@@ -27,6 +27,27 @@ body {
   min-height: 100vh;
 }
 
+/* Fix browser autofill background inconsistency */
+input:not(:disabled):-webkit-autofill,
+input:not(:disabled):-webkit-autofill:hover, 
+input:not(:disabled):-webkit-autofill:focus, 
+input:not(:disabled):-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #2a2a35 inset !important;
+    -webkit-text-fill-color: white !important;
+    transition: background-color 5000s ease-in-out 0s !important;
+}
+
+input:disabled:-webkit-autofill,
+input:disabled:-webkit-autofill:hover, 
+input:disabled:-webkit-autofill:focus, 
+input:disabled:-webkit-autofill:active {
+    /* Match the exact UserProfile card background color (#1e1e24) since transparency isn't allowed! */
+    -webkit-box-shadow: 0 0 0 1000px #1e1e24 inset !important;
+    -webkit-text-fill-color: #e0e0e0 !important;
+    border-color: transparent !important;
+    transition: background-color 5000s ease-in-out 0s !important;
+}
+
 /* Global Navbar Styles */
 .navbar {
   display: flex;

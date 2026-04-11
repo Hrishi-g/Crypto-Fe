@@ -29,10 +29,17 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
   return (
     <nav className="navbar" style={{position: 'fixed', width: '100%', boxSizing: 'border-box'}}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-        <div className="logo" onClick={() => navigate("/")} style={{cursor: 'pointer', margin: 0}}>
+        <div 
+          className="logo" 
+          onClick={() => {
+            navigate("/");
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }} 
+          style={{cursor: 'pointer', margin: 0}}
+        >
           CRYPTX
         </div>
-        {location.pathname === '/' && (
+        {location.pathname !== '/markets' && (
           <button
             className="btn-market"
             onClick={() => navigate('/markets')}
@@ -40,25 +47,39 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
             Markets
           </button>
         )}
-        {location.pathname === '/' && (
-          <button
-            className="btn-market"
-            onClick={() => navigate('/')}
-          >
-           Home
-          </button>
-        )}
       </div>
 
       <div className="nav-auth" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
         {user ? (
-          <button
-            className="btn-main btn-outline"
-            onClick={handleLogout}
-            style={{padding: '0.6rem 1.5rem'}}
-          >
-            Logout
-          </button>
+          <>
+            <div 
+              onClick={() => navigate(`/profile/${user.username || 'user'}`)}
+              style={{
+                width: '40px', 
+                height: '40px', 
+                borderRadius: '50%', 
+                background: 'linear-gradient(135deg, #bd34fe 0%, #41d1ff 100%)', 
+                color: 'white', 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                fontSize: '1.2rem',
+                boxShadow: '0 4px 10px rgba(189, 52, 254, 0.3)'
+              }}
+              title="User Profile"
+            >
+              {user.username ? user.username.charAt(0).toUpperCase() : 'U'}
+            </div>
+            <button
+              className="btn-main btn-outline"
+              onClick={handleLogout}
+              style={{padding: '0.6rem 1.5rem'}}
+            >
+              Logout
+            </button>
+          </>
         ) : (
           <button
             className="btn-main btn-primary-gradient"

@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 import Home from './features/auth/Home/Home';
 import Markets from './features/auth/Markets/Markets';
 import CoinDetail from './features/auth/CoinDetail/CoinDetail';
+import UserProfile from './features/user/Profile/UserProfile';
 
 const AppLayout = () => {
   const [user, setUser] = useState<any>(null);
@@ -56,6 +57,7 @@ const router = createBrowserRouter([
       { path: "/markets", element: <Markets /> },
       { path: "/coin/:id", element: <CoinDetail /> },
       { path: "/landing", element: <LandingPage /> },
+      { path: "/profile/:username", element: <UserProfile /> },
       { path: "*", element: <NotFound /> }
     ]
   }

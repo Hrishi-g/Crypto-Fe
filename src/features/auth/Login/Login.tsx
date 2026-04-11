@@ -45,7 +45,7 @@ const Login: React.FC = () => {
         setMessage({ type: 'success', text: 'Login successful! Redirecting...' });
         
         setTimeout(() => {
-          navigate('/landing');
+          navigate('/');
         }, 1500);
       } else {
         const contentType = response.headers.get('content-type');
