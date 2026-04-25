@@ -72,6 +72,14 @@
   color: var(--text-secondary);
   margin-bottom: 2.5rem;
   line-height: 1.6;
+  
+}
+.hero-desc1 {
+  font-size: 1.25rem;
+  color: var(--text-secondary);
+  margin-bottom: 2.5rem;
+  line-height: 1.6;
+  text-align: center;
 }
 
 .hero-cta {
@@ -88,8 +96,10 @@
 
 .hero-img-box {
   position: relative;
-  width: 500px;
-  height: 500px;
+  width: 100%;             /* Allow it to take available space */
+  max-width: 500px;        /* But don't let it grow larger than 500px */
+  height: auto;            /* Allow height to scale */
+  aspect-ratio: 1 / 1;     /* Keeps the box square */
   animation: float 6s ease-in-out infinite;
 }
 
@@ -133,20 +143,24 @@
 
 /* Market Grid */
 .market-section {
-  padding: 6rem 5%;
+  padding: 4rem 5%;
   max-width: 1400px;
   margin: 0 auto;
 }
 
 .section-header {
-  text-align: center;
-  margin-bottom: 4rem;
+  display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    margin-bottom: 3rem;
 }
 
 .section-title {
   font-size: 3rem;
   font-weight: 700;
   margin-bottom: 1rem;
+  color: #ef4444;
 }
 
 .market-grid {
@@ -274,7 +288,6 @@
     width: fit-content;
   }
   .hero-cta button{
-    width: 9rem;
     height: 3rem;
   }
   .btn-main{
@@ -292,9 +305,22 @@
     width: 300px;
     height: 300px;
     margin-top: 3rem;
+    animation:none;
   }
-  .hero-cta{
-    justify-content: space-around;
+  .hero-left {
+    display: flex;
+    max-width: 600px;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+  .badge{
+    margin: 0;
+  }
+  .hero-title{
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+  }
 
-  }
 }

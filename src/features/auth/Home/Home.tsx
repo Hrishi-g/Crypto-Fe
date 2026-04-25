@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
+import { apiFetch } from '../../../utils/api';
 import './Home.css';
 
 interface BinanceTicker {
@@ -11,6 +12,7 @@ interface BinanceTicker {
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useOutletContext<{ user: any }>();
   const [cryptoData, setCryptoData] = useState<BinanceTicker[]>([]);
   const [inrRate, setInrRate] = useState<number>(92.50);
   const [loading, setLoading] = useState(true);
@@ -18,7 +20,7 @@ const Home: React.FC = () => {
   useEffect(() => {
     const fetchRate = async () => {
       try {
-        const res = await fetch('http://localhost:8080/home/crypto/exchange-rate');
+        const res = await apiFetch('http://localhost:8080/home/crypto/exchange-rate');
         if (res.ok) {
           const rate = await res.json();
           setInrRate(rate);
@@ -31,9 +33,7 @@ const Home: React.FC = () => {
 
     const fetchTopCrypto = async () => {
       try {
-        const response = await fetch('http://localhost:8080/home/crypto/top-crypto', {
-          credentials: 'include'
-        });
+        const response = await apiFetch('http://localhost:8080/home/crypto/top-crypto');
         if (response.ok) {
           const data = await response.json();
           setCryptoData(data);
@@ -67,7 +67,7 @@ const Home: React.FC = () => {
       {/* Hero Section */}
       <section className="hero-container">
         <div className="hero-left">
-          <div className="badge">V3.0 IS NOW LIVE</div>
+          <div className="badge">Trade Crypto in INR</div>
           <h1 className="hero-title">
             Trade the Future <span>of Digital Assets</span>
           </h1>
@@ -76,7 +76,16 @@ const Home: React.FC = () => {
             Secure, lighting-fast, and built for both beginners and pro traders.
           </p>
           <div className="hero-cta">
-            <button className="btn-main btn-primary-gradient" onClick={() => navigate('/signup')}>
+            <button className="btn-main btn-primary-gradient" onClick={() => {
+              if (user) {
+                const marketSection = document.getElementById('market');
+                if (marketSection) {
+                  marketSection.scrollIntoView({ behavior: 'smooth' });
+                }
+              } else {
+                navigate('/login');
+              }
+            }}>
               Start Trading Now
             </button>
             <button className="btn-main btn-outline" onClick={() => navigate('/markets')}>
@@ -119,7 +128,7 @@ const Home: React.FC = () => {
       <section id="market" className="market-section">
         <div className="section-header">
           <h2 className="section-title">Market Overview</h2>
-          <p className="hero-desc">Track real-time performance of top crypto assets.</p>
+          <p className="hero-desc1">Track real-time performance of top crypto assets.</p>
         </div>
         
         {loading ? (

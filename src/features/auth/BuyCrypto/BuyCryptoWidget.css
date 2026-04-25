@@ -1,0 +1,232 @@
+.buy-widget-container {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: auto;
+}
+
+.widget-holding-info-row {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+.widget-holding-info-row2{
+  gap: 10px;
+}
+.row{
+  display: flex;
+  justify-content: space-between;
+}
+.row-label{
+  color: #94A3B8;
+}
+.row-value{
+  color: #fff;
+  font-weight: 500;
+}
+.row-value-sp{
+  color: #10B981;
+  font-weight: 500;
+}
+.buy-widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.buy-widget-header h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
+.widget-close-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.widget-close-btn:hover {
+  color: var(--text-light);
+}
+
+.buy-widget-content {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  flex: 1;
+  justify-content: center;
+}
+
+.buy-widget-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.buy-widget-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.buy-widget-qty-preview {
+  color: var(--brand-blue);
+  font-weight: 500;
+}
+
+.buy-widget-input-wrapper {
+  display: flex;
+  align-items: center;
+  background: rgba(15, 15, 26, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 0 1rem;
+  transition: all 0.2s;
+}
+
+.buy-widget-input-wrapper:focus-within {
+  border-color: var(--brand-blue);
+}
+
+.buy-widget-input-wrapper.error-state {
+  border-color: #ff4d4d;
+}
+
+.buy-widget-currency {
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-right: 0.5rem;
+}
+
+.buy-widget-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-light);
+  font-size: 1.25rem;
+  font-weight: 600;
+  padding: 0.75rem 0;
+  outline: none;
+  width: 100%;
+}
+
+.buy-widget-wallet-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.buy-widget-balance-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.buy-widget-actions {
+  margin-top: auto;
+}
+
+.widget-btn-proceed {
+  background: #00ff88;
+  box-shadow: 0 4px 15px rgba(0, 255, 136, 0.2);
+  border: none;
+  padding: 0.85rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  transition: transform 0.2s;
+}
+
+.widget-btn-proceed:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+.widget-holding-info{
+margin-bottom: 1rem;
+padding: 0.75rem;
+background: rgba(189, 52, 254, 0.08);
+border-radius: 12px;
+border: 1px solid rgba(189, 52, 254, 0.2);
+}
+.widget-btn-proceed:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.buy-widget-success {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: #00ff88;
+  padding: 0.85rem;
+  background: rgba(0, 255, 136, 0.05);
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.buy-widget-insufficient {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.insuf-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #ff4d4d;
+  font-size: 0.85rem;
+}
+
+.insuf-btn-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.widget-btn-max {
+  flex: 1;
+  background: rgba(0, 255, 136, 0.1);
+  color: #00ff88;
+  border: 1px dashed rgba(0, 255, 136, 0.4);
+  padding: 0.6rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.widget-btn-add {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-light);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.6rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}

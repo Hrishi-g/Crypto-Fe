@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
-import { ArrowLeft, TrendingUp, TrendingDown, Activity, BarChart3, Clock, Zap, History } from 'lucide-react';
+import { TrendingUp, TrendingDown, Activity, BarChart3, Clock, Zap, History } from 'lucide-react';
+import BuyCryptoWidget from '../BuyCrypto/BuyCryptoWidget';
 import './CoinDetail.css';
 
 interface BinanceTicker {
@@ -42,6 +43,7 @@ const CoinDetail: React.FC = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [inrRate, setInrRate] = useState<number | null>(null);
   const [priceHistory, setPriceHistory] = useState<number[]>([]);
+  const [activePanel, setActivePanel] = useState<'stats' | 'buy' | 'sell'>('stats');
   
   // Historical Chart States
   const [viewMode, setViewMode] = useState<'live' | 'historical'>('live');
@@ -186,9 +188,6 @@ const CoinDetail: React.FC = () => {
     <div className="coin-detail-wrapper">
       <div className="detail-container">
         <nav className="detail-nav">
-          <button className="back-link" onClick={() => navigate(-1)}>
-            <ArrowLeft size={20} /> Back
-          </button>
           <div className="connection-status">
             <span className={`status-dot ${isConnected ? 'online' : 'offline'}`}></span>
             {isConnected ? 'LIVE MARKET' : 'BUFFERING'}
@@ -430,45 +429,71 @@ const CoinDetail: React.FC = () => {
           </div>
 
           <div className="action-buttons-container">
-            <button className="btn-buy" onClick={() => navigate(user ? '/landing' : '/login')}>
+            <button className="btn-buy" onClick={() => {
+              if (user) {
+                setActivePanel('buy');
+              } else {
+                navigate('/login');
+              }
+            }}>
               Buy {id ? id.charAt(0).toUpperCase() + id.slice(1) : 'Coin'}
             </button>
-            <button className="btn-sell" onClick={() => navigate(user ? '/landing' : '/login')}>
+            <button className="btn-sell" onClick={() => {
+              if (user) {
+                setActivePanel('sell');
+              } else {
+                navigate('/login');
+              }
+            }}>
               Sell {id ? id.charAt(0).toUpperCase() + id.slice(1) : 'Coin'}
             </button>
           </div>
           </div>
 
-          <div className="stats-grid">
-            <div className="stat-card">
-              <div className="stat-icon"><Clock size={20} /></div>
-              <div className="stat-info">
-                <span className="stat-label">24h High (₹)</span>
-                <span className="stat-value">{ticker ? parseFloat(ticker.h).toLocaleString('en-IN') : '---'}</span>
+          {activePanel === 'stats' ? (
+            <div className="stats-grid">
+              <div className="stat-card">
+                <div className="stat-icon"><Clock size={20} /></div>
+                <div className="stat-info">
+                  <span className="stat-label">24h High (₹)</span>
+                  <span className="stat-value">{ticker ? parseFloat(ticker.h).toLocaleString('en-IN') : '---'}</span>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon"><TrendingDown size={20} /></div>
+                <div className="stat-info">
+                  <span className="stat-label">24h Low (₹)</span>
+                  <span className="stat-value">{ticker ? parseFloat(ticker.l).toLocaleString('en-IN') : '---'}</span>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon"><BarChart3 size={20} /></div>
+                <div className="stat-info">
+                  <span className="stat-label">24h Volume ({symbol?.toUpperCase()})</span>
+                  <span className="stat-value">{ticker ? parseFloat(ticker.v).toLocaleString(undefined, {maximumFractionDigits: 0}) : '---'}</span>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon"><Activity size={20} /></div>
+                <div className="stat-info">
+                  <span className="stat-label">Total Trades</span>
+                  <span className="stat-value">{ticker?.n.toLocaleString()}</span>
+                </div>
               </div>
             </div>
-            <div className="stat-card">
-              <div className="stat-icon"><TrendingDown size={20} /></div>
-              <div className="stat-info">
-                <span className="stat-label">24h Low (₹)</span>
-                <span className="stat-value">{ticker ? parseFloat(ticker.l).toLocaleString('en-IN') : '---'}</span>
-              </div>
+          ) : (
+            <div className="buy-widget-wrapper">
+              <BuyCryptoWidget 
+                id={id} 
+                symbol={symbol || id + 'usdt'} 
+                user={user} 
+                ticker={ticker} 
+                inrRate={inrRate} 
+                tradeType={activePanel === 'buy' ? 'BUY' : 'SELL'}
+                onCancel={() => setActivePanel('stats')}
+              />
             </div>
-            <div className="stat-card">
-              <div className="stat-icon"><BarChart3 size={20} /></div>
-              <div className="stat-info">
-                <span className="stat-label">24h Volume ({symbol?.toUpperCase()})</span>
-                <span className="stat-value">{ticker ? parseFloat(ticker.v).toLocaleString(undefined, {maximumFractionDigits: 0}) : '---'}</span>
-              </div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-icon"><Activity size={20} /></div>
-              <div className="stat-info">
-                <span className="stat-label">Total Trades</span>
-                <span className="stat-value">{ticker?.n.toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

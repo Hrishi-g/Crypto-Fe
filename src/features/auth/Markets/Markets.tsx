@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown } from 'lucide-react';
+import { apiFetch } from '../../../utils/api';
 import './Markets.css';
 
 interface CryptoCoin {
@@ -40,9 +41,7 @@ const Markets: React.FC = () => {
       setLoading(true);
       try {
         const queryParam = debouncedQuery ? `&query=${encodeURIComponent(debouncedQuery)}` : '';
-        const response = await fetch(`http://localhost:8080/home/crypto/all-crypto?page=${page}&perPage=${perPage}${queryParam}`, {
-          credentials: 'include'
-        });
+        const response = await apiFetch(`http://localhost:8080/home/crypto/all-crypto?page=${page}&perPage=${perPage}${queryParam}`);
         if (response.ok) {
           const data = await response.json();
           setCryptoData(data);

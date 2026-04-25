@@ -171,7 +171,8 @@
     gap: 2rem;
   }
 
-  .stats-grid {
+  .stats-grid,
+  .buy-widget-wrapper {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -187,6 +188,11 @@
 }
 
 /* Base components */
+.buy-widget-wrapper {
+  margin-bottom: 3rem;
+  width: 100%;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -487,6 +493,7 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
+    padding: 0.5rem;
   }
   
   .range-labels {
@@ -498,4 +505,22 @@
   .chart-preview-card {
     padding: 1.2rem;
   }
+
+  .detail-nav {
+  margin-bottom: 2rem;
+}
+.symbol-badge{
+  margin-bottom: 0.4rem;;
+}
+.price-section,.coin-header{
+  margin:0;
+}
+.chart-controls {
+height: 3.5rem;
+width: 100%;
+display: flex;
+align-items: center;
+justify-content: space-around;
+background: none;
+}
 }

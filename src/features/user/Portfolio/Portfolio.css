@@ -1,0 +1,230 @@
+.portfolio-wrapper {
+  padding: 6rem 5% 4rem;
+  min-height: 100vh;
+  color: var(--text-main, #1a1b1e);
+  font-family: 'Outfit', sans-serif;
+}
+
+.portfolio-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3rem;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
+.header-content h1 {
+  font-size: 2.5rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(134deg, #a4a4a4 0%, #176cff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.header-icon {
+  color: #bd34fe;
+}
+
+.subtitle {
+  color: #718096;
+  font-size: 1.1rem;
+  margin-top: 0.5rem;
+}
+
+.summary-card {
+  background: linear-gradient(135deg, #bd34fe 0%, #41d1ff 100%);
+  padding: 1.5rem 2rem;
+  border-radius: 20px;
+  color: white;
+  box-shadow: 0 10px 25px rgba(189, 52, 254, 0.2);
+  text-align: right;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.summary-card.clickable {
+  cursor: pointer;
+}
+
+.summary-card.clickable:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 15px 35px rgba(189, 52, 254, 0.3);
+}
+
+.summary-label {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.summary-value {
+  font-size: 2.5rem;
+  margin: 0.5rem 0 0;
+  font-weight: 700;
+}
+
+.asset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1.5rem;
+}
+
+.asset-card {
+
+
+
+  background: var(--glass);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(10px);
+    padding: 1.5rem;
+    border-radius: 24px;
+    transition: all 0.3s ease
+
+  /* background: var(--glass);
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; */
+}
+
+.asset-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
+}
+
+.asset-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.asset-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #bd34fe;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+}
+
+.asset-details h3 {
+  margin: 0 0 0.2rem;
+  font-size: 1.3rem;
+  color: #f8f9fc;
+}
+
+.asset-quantity {
+  color: #718096;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.asset-financials {
+  padding: 1rem;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.price-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.price-info .label {
+  color: #f8f9fc;
+  font-size: 1rem;
+}
+
+.price-info .value {
+  font-weight: 600;
+  color: #f8f9fc;
+}
+
+.price-info.highlight .value {
+  color: #bd34fe;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.empty-portfolio {
+  text-align: center;
+  padding: 5rem 2rem;
+  background: rgba(255, 255, 255, 0.6);
+  border: 2px dashed #ffb6c1;
+  border-radius: 24px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+}
+
+.empty-icon {
+  color: #cbd5e1;
+  margin-bottom: 1.5rem;
+}
+
+.empty-portfolio h3 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #1e293b;
+}
+
+.empty-portfolio p {
+  color: #64748b;
+  margin-bottom: 2rem;
+}
+
+.portfolio-container.loading,
+.portfolio-container.error {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--bg-main, #f8f9fc);
+}
+
+.portfolio-container.error h2 {
+  color: #e53e3e;
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.portfolio-container.error p {
+  color: #4a5568;
+  margin-bottom: 2rem;
+  font-size: 1.2rem;
+}
+
+@media (max-width: 768px) {
+  .portfolio-header {
+    flex-direction: column;
+  }
+  
+  .summary-card {
+    width: 100%;
+    text-align: left;
+  }
+
+  .portfolio-summary{
+    width: 100%;
+  }
+  .summary-car{
+    padding: 1rem;
+  }
+}

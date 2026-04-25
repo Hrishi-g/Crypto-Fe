@@ -1,0 +1,397 @@
+.buy-crypto-page-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 4rem 1rem 2rem;
+  background-color: var(--bg-dark);
+}
+
+.buy-crypto-content-wrapper {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.buy-nav-layer {
+  display: flex;
+  align-items: center;
+}
+
+.nav-back-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  padding: 0;
+}
+
+.nav-back-button:hover {
+  color: var(--text-light);
+}
+
+/* Header Mimicking Image */
+.buy-price-header-area {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.buy-coin-tagline {
+  display: flex;
+  align-items: center;
+}
+
+.buy-symbol-badge-pnl {
+  background-color: #9333ea; /* Purple background from image */
+  color: #ffffff;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.buy-name-large-display {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--text-light);
+  margin: 0.5rem 0 0 0;
+  letter-spacing: -0.5px;
+}
+
+.buy-price-metrics {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+.buy-hero-price {
+  font-size: 3.5rem;
+  font-weight: 800;
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+}
+
+.buy-hero-price.positive {
+  color: #00ff88; /* Bright Green */
+}
+
+.buy-hero-price.negative {
+  color: #ff4d4d;
+}
+
+.hero-currency-mark {
+  font-size: 2.5rem;
+  margin-right: 2px;
+}
+
+.buy-price-secondary-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.buy-usd-equiv {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.buy-rate-info-badge {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.buy-percentage-change {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.buy-percentage-change.trend-up {
+  background-color: rgba(0, 255, 136, 0.1);
+  color: #00ff88;
+  border: 1px solid rgba(0, 255, 136, 0.2);
+}
+
+.buy-percentage-change.trend-down {
+  background-color: rgba(255, 77, 77, 0.1);
+  color: #ff4d4d;
+  border: 1px solid rgba(255, 77, 77, 0.2);
+}
+
+/* Action Panel Card */
+.buy-action-panel-card {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.buy-input-section-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.buy-amount-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--text-light);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.buy-crypto-qty-preview {
+  color: var(--brand-blue);
+  font-size: 0.9rem;
+}
+
+.buy-input-element-wrap {
+  display: flex;
+  align-items: center;
+  background: rgba(15, 15, 26, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 0 1rem;
+  transition: all 0.2s ease;
+}
+
+.buy-input-element-wrap:focus-within {
+  border-color: var(--brand-blue);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.buy-input-element-wrap.error-border {
+  border-color: #ff4d4d;
+}
+
+.input-rupee-sign {
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-right: 0.5rem;
+}
+
+.buy-inr-numeric-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-light);
+  font-size: 1.5rem;
+  font-weight: 600;
+  padding: 1rem 0;
+  outline: none;
+  font-family: inherit;
+}
+
+.buy-inr-numeric-input::placeholder {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+/* Wallet Row */
+.buy-wallet-balance-row {
+  display: flex;
+  justify-content: flex-end;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 1rem;
+}
+
+.wallet-bal-detail {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+/* Dynamic Controls Layout */
+.buy-dynamic-controls-area {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 50px;
+}
+
+.execute-buy-proceed-btn {
+  background: linear-gradient(135deg, var(--brand-blue), var(--brand-purple));
+  color: #fff;
+  border: none;
+  padding: 1rem;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.execute-buy-proceed-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+}
+
+.execute-buy-proceed-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Insufficient States */
+.buy-insufficient-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.buy-security-footer {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #64748b;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+/* Sell Button Override */
+.execute-buy-proceed-btn.sell-btn {
+  background: #f44336 !important;
+}
+
+.execute-buy-proceed-btn.sell-btn:hover {
+  background: #d32f2f !important;
+  box-shadow: 0 8px 25px rgba(244, 67, 54, 0.4);
+}
+
+.trade-type-tabs .trade-tab {
+  transition: all 0.3s ease;
+}
+
+.trade-type-tabs .trade-tab:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.insuf-warning-msg {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #ff4d4d;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.insuf-btn-group {
+  display: flex;
+  gap: 1rem;
+}
+
+.max-buy-text-btn {
+  flex: 1;
+  background: rgba(0, 255, 136, 0.1);
+  color: #00ff88;
+  border: 1px dashed rgba(0, 255, 136, 0.4);
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.max-buy-text-btn:hover {
+  background: rgba(0, 255, 136, 0.2);
+  border-style: solid;
+}
+
+.add-funds-btn {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-light);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-funds-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.buy-success-msg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: #00ff88;
+  padding: 1rem;
+  background: rgba(0, 255, 136, 0.05);
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.buy-security-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-top: 1rem;
+}
+
+/* Responsiveness */
+@media (max-width: 480px) {
+  .buy-price-metrics {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  
+  .insuf-btn-group {
+    flex-direction: column;
+  }
+}
+
+.buy-crypto-embedded { 
+  width: 100%; 
+}
+
+.buy-crypto-embedded-wrapper { 
+  width: 100%; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 1rem; 
+}

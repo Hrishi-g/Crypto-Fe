@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { getCsrfHeaders } from '../../../utils/csrf';
+import { apiFetch } from '../../../utils/api';
+import { ArrowUpCircle, ArrowDownCircle, IndianRupee, Loader2 } from 'lucide-react';
 
 interface WalletManagerProps {
   balance: number;
@@ -8,7 +10,7 @@ interface WalletManagerProps {
   userId?: number;
 }
 
-const WalletManager: React.FC<WalletManagerProps> = ({ balance, onClose, onUpdateBalance, userId }) => {
+const WalletManager: React.FC<WalletManagerProps> = ({ balance, onUpdateBalance }) => {
   const [amount, setAmount] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,26 +30,24 @@ const WalletManager: React.FC<WalletManagerProps> = ({ balance, onClose, onUpdat
       setError("Please enter a valid amount greater than 0");
       return;
     }
+    if (val < 100) {
+      setError(`Minimum ${type === 'CREDIT' ? 'deposit' : 'withdrawal'} amount is ₹100.00`);
+      return;
+    }
     if (type === 'DEBIT' && val > balance) {
-      setError("Insufficient funds");
+      setError("Insufficient funds in your wallet");
       return;
     }
     
-    if (!userId) {
-      setError("User ID is missing! Cannot process transaction.");
-      return;
-    }
-
     setLoading(true);
     setError(null);
     setSuccess(null);
     
-    // Calculate new balance locally upon successful transaction
     const newBalance = type === 'CREDIT' ? balance + val : balance - val;
 
     try {
-      const res = await fetch(`http://localhost:8080/wallet/update`, {
-        method: 'POST', // or POST depending on your backend
+      const res = await apiFetch(`http://localhost:8080/wallet/update`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...getCsrfHeaders()
@@ -55,17 +55,16 @@ const WalletManager: React.FC<WalletManagerProps> = ({ balance, onClose, onUpdat
         body: JSON.stringify({
           amount: val,
           type: type
-        }),
-        credentials: 'include'
+        })
       });
 
       if (!res.ok) {
-        throw new Error("Transaction failed");
+        throw new Error("Transaction failed. Please try again.");
       }
 
       onUpdateBalance(newBalance);
       setAmount('');
-      setSuccess(`Transaction successful! ${type === 'CREDIT' ? 'Credited' : 'Debited'} ${formatINR(val)}`);
+      setSuccess(`Successfully ${type === 'CREDIT' ? 'credited' : 'debited'} ${formatINR(val)}`);
       
       setTimeout(() => {
         setSuccess(null);
@@ -79,53 +78,85 @@ const WalletManager: React.FC<WalletManagerProps> = ({ balance, onClose, onUpdat
   };
 
   return (
-    <div style={{ width: '100%', animation: 'slideUp 0.3s ease-out' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h2 style={{ margin: 0, fontSize: '1.5rem' }}>Manage Wallet</h2>
-        <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '1.2rem' }}>
-          ✕
-        </button>
-      </div>
-
-      <div style={{ textAlign: 'center', marginBottom: '2rem', padding: '1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '12px' }}>
-        <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Current Balance</div>
-        <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--success)' }}>
+    <div className="wallet-manager-inner">
+      <div className="wallet-balance-display">
+        <div style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>
+            Current Available Balance
+        </div>
+        <div className="balance-amount">
           {formatINR(balance)}
         </div>
       </div>
 
-      {error && <div className="error-message" style={{ marginBottom: '1rem' }}>{error}</div>}
-      {success && <div className="success-message" style={{ marginBottom: '1rem' }}>{success}</div>}
+      {error && <div className="error-message" style={{ margin: '1rem 0' }}>{error}</div>}
+      {success && <div className="success-message" style={{ margin: '1rem 0' }}>{success}</div>}
 
-      <div className="form-group">
-        <label>Amount (INR):</label>
-        <input 
-          type="number" 
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="e.g. 5000"
-          min="1"
-          step="any"
-        />
+      <div className="form-group" style={{ marginBottom: '2rem' }}>
+        <label><IndianRupee size={14} /> Enter Amount to {amount ? 'Transfer' : 'Deposit/Withdraw'}</label>
+        <div className="input-wrapper">
+            <input 
+              type="number" 
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="0.00"
+              min="100"
+              step="any"
+              style={{ fontSize: '1.5rem', padding: '16px 20px', textAlign: 'center' }}
+            />
+        </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
         <button 
           onClick={() => handleTransaction('CREDIT')}
           disabled={loading}
-          className="btn-main btn-primary-gradient" 
-          style={{ width: '100%', background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)', boxShadow: '0 4px 15px rgba(34, 197, 94, 0.3)' }}
+          className="btn-main" 
+          style={{ 
+            width: '100%', 
+            background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)', 
+            boxShadow: '0 10px 20px rgba(34, 197, 94, 0.2)',
+            border: 'none',
+            color: 'white',
+            padding: '16px',
+            borderRadius: '16px',
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
+            cursor: 'pointer',
+            transition: 'all 0.3s'
+          }}
         >
-          {loading ? '...' : '+ Credit'}
+          {loading ? <Loader2 className="animate-spin" /> : <><ArrowUpCircle size={20} /> Deposit</>}
         </button>
         <button 
           onClick={() => handleTransaction('DEBIT')}
           disabled={loading}
-          className="btn-main btn-primary-gradient" 
-          style={{ width: '100%', background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)' }}
+          className="btn-main" 
+          style={{ 
+            width: '100%', 
+            background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', 
+            boxShadow: '0 10px 20px rgba(239, 68, 68, 0.2)',
+            border: 'none',
+            color: 'white',
+            padding: '16px',
+            borderRadius: '16px',
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
+            cursor: 'pointer',
+            transition: 'all 0.3s'
+          }}
         >
-          {loading ? '...' : '- Debit'}
+          {loading ? <Loader2 className="animate-spin" /> : <><ArrowDownCircle size={20} /> Withdraw</>}
         </button>
+      </div>
+      
+      <div style={{ marginTop: '2rem', textAlign: 'center', color: '#64748b', fontSize: '0.85rem' }}>
+        <p>Transactions are processed instantly and secured with 256-bit encryption.</p>
       </div>
     </div>
   );

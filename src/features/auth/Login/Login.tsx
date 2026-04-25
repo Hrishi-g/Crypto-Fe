@@ -41,6 +41,20 @@ const Login: React.FC = () => {
             userData = await response.json();
             setUser(userData);
         }
+
+        // Call /user/profile to populate backend cache for subsequent API calls
+        try {
+          const profileRes = await fetch('http://localhost:8080/user/profile', {
+            method: 'GET',
+            credentials: 'include'
+          });
+          if (profileRes.ok) {
+            const profileData = await profileRes.json();
+            setUser((prev: any) => ({ ...prev, ...profileData }));
+          }
+        } catch (profileErr) {
+          console.error('Failed to pre-cache user profile:', profileErr);
+        }
         
         setMessage({ type: 'success', text: 'Login successful! Redirecting...' });
         

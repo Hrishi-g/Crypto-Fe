@@ -1,14 +1,18 @@
 import { createBrowserRouter, RouterProvider, useLocation, Outlet } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import Signup from './features/auth/Signup/Signup'
 import Login from './features/auth/Login/Login'
 import Navbar from './features/auth/Navbar/Navbar'
 import NotFound from './features/auth/NotFound/NotFound'
-import LandingPage from './features/auth/LandingPage/LandingPage';
 import { useState, useEffect } from 'react';
 import Home from './features/auth/Home/Home';
 import Markets from './features/auth/Markets/Markets';
 import CoinDetail from './features/auth/CoinDetail/CoinDetail';
 import UserProfile from './features/user/Profile/UserProfile';
+import BuyCrypto from './features/auth/BuyCrypto/BuyCrypto';
+import Portfolio from './features/user/Portfolio/Portfolio';
+import WalletHistory from './features/user/WalletHistory/WalletHistory';
+
 
 const AppLayout = () => {
   const [user, setUser] = useState<any>(null);
@@ -24,24 +28,45 @@ const AppLayout = () => {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const res = await fetch('http://localhost:8080/auth/check', {
-          credentials: 'include'
-        });
+        const { apiFetch } = await import('./utils/api');
+        const res = await apiFetch('http://localhost:8080/auth/check');
+
         if (res.ok) {
-          const data = await res.json();
-          setUser(data);
+          const authData = await res.json();
+          let userData = { ...authData };
+          
+          const profileRes = await apiFetch('http://localhost:8080/user/profile');
+          if (profileRes.ok) {
+            const profileData = await profileRes.json();
+            userData = { ...userData, ...profileData };
+          }
+          setUser(userData);
+        } else {
+           setUser(null);
         }
       } catch (err) {
-        console.error("Session check failed, user not logged in:", err);
+        console.error("Session check failed:", err);
       }
     };
+    
     checkSession();
   }, []);
 
   return (
     <div className={`app-container ${user ? "auth-mode" : "guest-mode"}`}>
       {shouldShowNavbar && <Navbar user={user} setUser={setUser} />}
-      <Outlet context={{ user, setUser }} />
+      <motion.div
+        key={location.pathname}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ 
+          duration: 0.2, 
+          ease: "easeOut"
+        }}
+        style={{ width: '100%' }}
+      >
+        <Outlet context={{ user, setUser }} />
+      </motion.div>
     </div>
   );
 };
@@ -56,9 +81,12 @@ const router = createBrowserRouter([
       { path: "/login", element: <Login /> },
       { path: "/markets", element: <Markets /> },
       { path: "/coin/:id", element: <CoinDetail /> },
-      { path: "/landing", element: <LandingPage /> },
+      { path: "/buy/:id", element: <BuyCrypto /> },
       { path: "/profile/:username", element: <UserProfile /> },
+      { path: "/portfolio", element: <Portfolio /> },
+      { path: "/wallet/history", element: <WalletHistory /> },
       { path: "*", element: <NotFound /> }
+
     ]
   }
 ]);
