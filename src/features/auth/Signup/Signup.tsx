@@ -40,7 +40,6 @@ const Signup: React.FC = () => {
       const payload = {
         firstName: data.firstName,
         lastName: data.lastName,
-        username: data.username,
         email: data.email,
         dob: data.dob,
         password: data.password,
@@ -137,12 +136,12 @@ const Signup: React.FC = () => {
                 </div>
               </div>
 
-              <div className="auth-group">
+              {/* <div className="auth-group">
                 <label>Username</label>
                 <div className="auth-input-container">
                   <input {...register("username", { required: true })} placeholder="johndoe123" className={errors.username ? 'error' : ''} />
                 </div>
-              </div>
+              </div> */}
 
               <div className="auth-group">
                 <label><Mail size={16} /> Email Address</label>
@@ -199,6 +198,19 @@ const Signup: React.FC = () => {
 
               <button type="submit" className="btn-main btn-primary-gradient auth-submit" disabled={loading}>
                 {loading ? 'Creating Account...' : 'Initialize Account'}
+              </button>
+
+              <div className="auth-divider">
+                <span>OR</span>
+              </div>
+
+              <button 
+                type="button" 
+                className="oauth-button google"
+                onClick={() => window.location.href = 'http://localhost:8080/oauth2/authorization/google'}
+              >
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
+                Continue with Google
               </button>
 
               <footer className="auth-footer">

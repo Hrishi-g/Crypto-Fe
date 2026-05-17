@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
 import { TrendingUp, TrendingDown, Activity, BarChart3, Clock, Zap, History } from 'lucide-react';
 import BuyCryptoWidget from '../BuyCrypto/BuyCryptoWidget';
+import { apiFetch } from '../../../utils/api';
 import './CoinDetail.css';
 
 interface BinanceTicker {
@@ -31,10 +32,12 @@ interface BinanceTicker {
 }
 
 const CoinDetail: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const symbol = searchParams.get('symbol');
+  const id = symbol ? symbol.toLowerCase().replace(/usdt$/, '').replace(/usd$/, '') : '';
+  const coinNameFromUrl = searchParams.get('name');
+  const displayCoinName = coinNameFromUrl || (id ? id.charAt(0).toUpperCase() + id.slice(1) : 'Coin');
   
   const navigate = useNavigate();
   const context = useOutletContext<{ user: any }>();
@@ -58,7 +61,7 @@ const CoinDetail: React.FC = () => {
   useEffect(() => {
     const fetchRate = async () => {
       try {
-        const res = await fetch('http://localhost:8080/home/crypto/exchange-rate');
+        const res = await apiFetch('http://localhost:8080/home/crypto/exchange-rate');
         if (res.ok) {
           const rate = await res.json();
           setInrRate(rate);
@@ -75,29 +78,36 @@ const CoinDetail: React.FC = () => {
   useEffect(() => {
     if (!id) return;
     const fetchHistorical = async () => {
-      // Map base symbols to CoinGecko IDs since Binance doesn't provide them
-      const symbolMap: Record<string, string> = {
-        btc: 'bitcoin', eth: 'ethereum', bnb: 'binancecoin', sol: 'solana',
-        xrp: 'ripple', ada: 'cardano', doge: 'dogecoin', trx: 'tron',
-        dot: 'polkadot', avax: 'avalanche-2', link: 'chainlink', matic: 'matic-network',
-        shib: 'shiba-inu', ltc: 'litecoin', bch: 'bitcoin-cash', xlm: 'stellar'
-      };
-      const coinGeckoId = symbolMap[id] || id;
 
       setIsHistLoading(true);
       try {
-        const res = await fetch(`http://localhost:8080/home/crypto/historical-data?coinId=${coinGeckoId}&days=1`);
+        const activeSymbol =
+                    symbol || id;
+
+        const binanceSymbol =
+                    activeSymbol
+                        .toUpperCase()
+                        .endsWith("USDT")
+
+                        ? activeSymbol.toUpperCase()
+
+                        : `${activeSymbol.toUpperCase()}USDT`;
+
+        const res = await apiFetch(`http://localhost:8080/home/crypto/historical-data?symbol=${binanceSymbol}&interval=15m&limit=96`);
         if (res.ok) {
           const result = await res.json();
-          // Backend returns { tickerData: { prices: [] }, timestamp: "..." }
+          // result.tickerData is directly array of klines
           const data = result?.tickerData;
-          if (data && data.prices) {
-            const mapped = data.prices.map((p: any) => ({ 
-              time: p[0], 
-              price: p[1] 
+
+          if (data && Array.isArray(data)) {
+            const mapped = data.map((kline: any[]) => ({
+              time: kline[0], // candle open time
+              // close price
+              price: parseFloat(kline[4]) * (inrRate || 1)
             }));
             setHistoricalData(mapped);
           }
+
           if (result?.timestamp) {
             setLastUpdated(result.timestamp);
           }
@@ -109,14 +119,15 @@ const CoinDetail: React.FC = () => {
       }
     };
     fetchHistorical();
-  }, [id]);
+  }, [id, symbol, inrRate]);
 
   // 3. WebSocket Connection
   useEffect(() => {
-    if (!symbol || inrRate === null) return;
+    const activeSymbol = symbol || id;
+    if (!activeSymbol || inrRate === null) return;
 
     // Our new homepage passes "BTCUSDT" directly, prevent "btcusdtusdt"
-    const lowerSymbol = symbol.toLowerCase();
+    const lowerSymbol = activeSymbol.toLowerCase();
     const binanceSymbol = lowerSymbol.endsWith('usdt') ? lowerSymbol : `${lowerSymbol}usdt`;
     const socketUrl = `ws://localhost:8080/ws/crypto/${binanceSymbol}`;
     ws.current = new WebSocket(socketUrl);
@@ -132,7 +143,7 @@ const CoinDetail: React.FC = () => {
         h: (parseFloat(rawData.h) * inrRate).toString(),
         l: (parseFloat(rawData.l) * inrRate).toString(),
         o: (parseFloat(rawData.o) * inrRate).toString(),
-        p: (parseFloat(rawData.p) * inrRate).toString()
+        p: rawData.p,
       };
 
       setTicker(convertedData);
@@ -148,7 +159,7 @@ const CoinDetail: React.FC = () => {
     return () => {
       if (ws.current) ws.current.close();
     };
-  }, [symbol, inrRate]);
+  }, [symbol, id, inrRate]);
 
   if (!ticker && !isConnected && !historicalData.length) {
     return (
@@ -197,7 +208,7 @@ const CoinDetail: React.FC = () => {
         <header className="coin-header">
           <div className="coin-title-row">
             <div className="symbol-badge">{symbol?.toUpperCase()} / INR</div>
-            <h1 className="coin-name-large">{id ? id.charAt(0).toUpperCase() + id.slice(1) : 'Coin'} Price</h1>
+            <h1 className="coin-name-large">{displayCoinName} Price</h1>
           </div>
           
           <div className="price-section">
@@ -436,7 +447,7 @@ const CoinDetail: React.FC = () => {
                 navigate('/login');
               }
             }}>
-              Buy {id ? id.charAt(0).toUpperCase() + id.slice(1) : 'Coin'}
+              Buy {displayCoinName}
             </button>
             <button className="btn-sell" onClick={() => {
               if (user) {
@@ -445,7 +456,7 @@ const CoinDetail: React.FC = () => {
                 navigate('/login');
               }
             }}>
-              Sell {id ? id.charAt(0).toUpperCase() + id.slice(1) : 'Coin'}
+              Sell {displayCoinName}
             </button>
           </div>
           </div>
@@ -485,6 +496,7 @@ const CoinDetail: React.FC = () => {
             <div className="buy-widget-wrapper">
               <BuyCryptoWidget 
                 id={id} 
+                name={displayCoinName}
                 symbol={symbol || id + 'usdt'} 
                 user={user} 
                 ticker={ticker} 

@@ -93,7 +93,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
                 <History size={20} />
               </div>
               <div 
-                onClick={() => navigate(`/profile/${user.username || 'user'}`)}
+                onClick={() => navigate(`/profile`)}
                 className="profile-avatar"
                 title="User Profile"
               >
@@ -130,7 +130,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
               <div 
                 className="mobile-nav-item profile-item"
                 onClick={() => {
-                  navigate(`/profile/${user.username || 'user'}`);
+                  navigate(`/profile`);
                   setIsMenuOpen(false);
                 }}
               >

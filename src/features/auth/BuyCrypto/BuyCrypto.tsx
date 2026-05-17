@@ -347,7 +347,7 @@ const BuyCrypto: React.FC = () => {
                   {tradeType === 'BUY' && (
                     <button 
                       className="add-funds-btn" 
-                      onClick={() => navigate(`/profile/${user?.username}`)}
+                      onClick={() => navigate(`/profile`)}
                     >
                       Add Money
                     </button>

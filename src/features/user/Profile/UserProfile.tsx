@@ -4,6 +4,7 @@ import { User, Mail, Calendar, Wallet, Shield, CheckCircle, AlertCircle, X, Plus
 import { getCsrfHeaders } from '../../../utils/csrf';
 import { apiFetch } from '../../../utils/api';
 import WalletManager from './WalletManager';
+import SetPasswordModal from '../../auth/SetPassword/SetPasswordModal';
 import './UserProfile.css';
 
 interface UserProfileData {
@@ -16,7 +17,6 @@ interface UserProfileData {
 }
 
 const UserProfile: React.FC = () => {
-  const { username } = useParams<{ username: string }>();
   const location = useLocation();
   const { user, setUser } = useOutletContext<{ user: any, setUser: (u: any) => void }>();
   const [isEditing, setIsEditing] = useState(false);
@@ -31,7 +31,11 @@ const UserProfile: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showWallet, setShowWallet] = useState(false);
-
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [originalData, setOriginalData] = useState<UserProfileData | null>(null);
+ const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+ const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [isSendingLink, setIsSendingLink] = useState(false);
   const fetchUserProfile = async () => {
       try {
           const res = await apiFetch(`http://localhost:8080/user/profile`);
@@ -45,6 +49,7 @@ const UserProfile: React.FC = () => {
                   email: data.email || '',
                   dob: data.dob || ''
               };
+              setOriginalData(updatedData);
               setFormData(updatedData);
               if (user) {
                 setUser({ ...user, ...updatedData });
@@ -56,10 +61,8 @@ const UserProfile: React.FC = () => {
   };
 
   useEffect(() => {
-    if (username) {
-        fetchUserProfile();
-    }
-  }, [username]);
+    fetchUserProfile();
+  }, []);
 
   useEffect(() => {
     if (location.state?.showWallet) {
@@ -74,6 +77,20 @@ const UserProfile: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (originalData) {
+      const hasChanged = 
+        formData.firstName !== originalData.firstName ||
+        formData.lastName !== originalData.lastName ||
+        formData.email !== originalData.email ||
+        formData.dob !== originalData.dob;
+
+      if (!hasChanged) {
+        setIsEditing(false);
+        return;
+      }
+    }
+
     try {
       const response = await apiFetch(`http://localhost:8080/user/update/profile`, {
         method: 'PUT',
@@ -91,11 +108,49 @@ const UserProfile: React.FC = () => {
       setSuccessMessage('Profile updated successfully!');
       setTimeout(() => setSuccessMessage(null), 4000);
       
+      setOriginalData(formData);
+      
       if (user) {
         setUser({ ...user, ...formData });
       }
     } catch (err: any) {
       setError(err.message);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!formData.email) {
+      setMessage({ type: 'error', text: 'No email found in profile.' });
+      return;
+    }
+    setMessage(null);
+    setIsSendingLink(true);
+    try {
+      const response = await apiFetch('http://localhost:8080/auth/send-reset-password-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: formData.email
+      });
+
+      if (response.ok) {
+        setMessage({ type: 'success', text: 'Reset link sent to your email!' });
+        setTimeout(() => {
+          setIsForgotPassword(false);
+          setMessage(null);
+        }, 3000);
+      } else {
+        const errorText = await response.text();
+        let errorMessage = errorText;
+        try {
+          const errObj = JSON.parse(errorText);
+          errorMessage = errObj.message || errorText;
+        } catch (e) {}
+        setMessage({ type: 'error', text: errorMessage || 'Failed to send reset link.' });
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: 'An error occurred. Please try again.' });
+    } finally {
+      setIsSendingLink(false);
     }
   };
 
@@ -108,6 +163,12 @@ const UserProfile: React.FC = () => {
 
   return (
     <div className="user-profile-container">
+      {user?.hasPassword === false && (
+        <div className='user-profile-change-password-btn-prompt'>
+          <span>Want to set your password now? </span>
+          <button onClick={() => setShowPasswordModal(true)} className="manage-btn">Set Password</button>
+        </div>
+      )}
       <div className="user-profile-card">
         {showWallet ? (
           <div className="wallet-manager-container">
@@ -126,6 +187,37 @@ const UserProfile: React.FC = () => {
               onClose={() => setShowWallet(false)} 
               onUpdateBalance={fetchUserProfile} 
             />
+          </div>
+        ) : isForgotPassword ? (
+          <div className="profile-content" style={{ textAlign: 'center', padding: '3rem' }}>
+            <h3 style={{ marginBottom: '1rem', color: '#fff', fontSize: '1.5rem', fontWeight: '700' }}>Reset Your Password</h3>
+            <p style={{ color: '#94a3b8', marginBottom: '2rem', lineHeight: '1.6' }}>
+              We will send a password reset link to your registered email address:<br/>
+              <strong style={{ color: '#fff', display: 'block', marginTop: '0.5rem' }}>{formData.email}</strong>
+            </p>
+            {message && (
+              <div className={`auth-message ${message.type}`} style={{ marginBottom: '2rem', textAlign: 'left' }}>
+                {message.text}
+              </div>
+            )}
+            
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+              <button 
+                type="button" 
+                className="btn-main btn-outline" 
+                onClick={() => { setIsForgotPassword(false); setMessage(null); }}
+              >
+                Cancel
+              </button>
+              <button 
+                type="button" 
+                className="btn-main btn-primary-gradient" 
+                onClick={handleForgotPassword}
+                disabled={isSendingLink || message?.type === 'success'}
+              >
+                {isSendingLink ? 'Sending...' : 'Send Link'}
+              </button>
+            </div>
           </div>
         ) : (
           <>
@@ -210,31 +302,58 @@ const UserProfile: React.FC = () => {
                       required
                     />
                   </div>
-
-                  <div className="profile-actions">
-                    {isEditing ? (
-                      <>
-                        <button type="button" className="btn-main btn-outline" onClick={() => setIsEditing(false)}>Cancel</button>
-                        <button type="submit" className="btn-main btn-primary-gradient">Save Changes</button>
-                      </>
-                    ) : (
-                      <button 
-                        type="button" 
-                        className="btn-main btn-primary-gradient" 
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setIsEditing(true);
-                        }}
-                      >
-                        Edit Profile
-                      </button>
-                    )}
+                  <div className="form-group">
+                    <button 
+                    type="button" 
+                    onClick={() => {
+                      setIsForgotPassword(true);
+                      setMessage(null);
+                    }} 
+                    className="btn-main btn-primary-gradient" 
+                    style={{ fontSize: '0.85rem' }}
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
+                  <div className="form-group">
+                    <div className="profile-actions">
+                      {isEditing ? (
+                        <>
+                          <button type="button" className="btn-main btn-outline" onClick={() => setIsEditing(false)}>Cancel</button>
+                          <button type="submit" className="btn-main btn-primary-gradient">Save Changes</button>
+                        </>
+                      ) : (
+                        <button 
+                          type="button" 
+                          className="btn-main btn-primary-gradient" 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setIsEditing(true);
+                          }}
+                        >
+                          Edit Profile
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </form>
             </div>
           </>
         )}
       </div>
+      {showPasswordModal && (
+        <SetPasswordModal 
+          onClose={() => setShowPasswordModal(false)}
+          onSuccess={() => {
+            setShowPasswordModal(false);
+            setSuccessMessage('Password set successfully!');
+            setTimeout(() => setSuccessMessage(null), 4000);
+            if (user) {
+              setUser({ ...user, hasPassword: true });
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

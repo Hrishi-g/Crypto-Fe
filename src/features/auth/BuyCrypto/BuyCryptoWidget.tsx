@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Wallet, ShieldCheck, AlertCircle } from 'lucide-react';
 import { getCsrfHeaders } from '../../../utils/csrf';
+import { apiFetch } from '../../../utils/api';
 import './BuyCryptoWidget.css';
 
 interface BinanceTicker {
@@ -17,6 +18,7 @@ interface PortfolioItem {
 
 interface BuyCryptoWidgetProps {
   id?: string;
+  name?: string;
   symbol?: string;
   user: any;
   ticker: BinanceTicker | null;
@@ -25,7 +27,7 @@ interface BuyCryptoWidgetProps {
   onCancel: () => void;
 }
 
-const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, user, ticker, tradeType = 'BUY', onCancel }) => {
+const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, name, user, ticker, tradeType = 'BUY', onCancel }) => {
   const navigate = useNavigate();
   const [balance, setBalance] = useState<number>(0);
   const [selectedHolding, setSelectedHolding] = useState<PortfolioItem | null>(null);
@@ -38,13 +40,13 @@ const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, user, ticker, tra
     const fetchUserProfile = async () => {
       try {
         const [profileRes, portfolioRes] = await Promise.all([
-          fetch(`http://localhost:8080/user/profile`, { credentials: 'include' }),
-          fetch(`http://localhost:8080/portfolio/get`, { credentials: 'include' })
+          apiFetch(`http://localhost:8080/user/profile`, { credentials: 'include' }),
+          apiFetch(`http://localhost:8080/portfolio/get`, { credentials: 'include' })
         ]);
         
         if (profileRes.ok) {
           const data = await profileRes.json();
-          setBalance(data.totalAmount || 0);
+          setBalance(Number(data.totalAmount || 0));
         }
 
         if (portfolioRes.ok) {
@@ -74,14 +76,14 @@ const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, user, ticker, tra
     : amount || '0';
 
   const isInsufficientBalance = !isSell && numericAmount > balance;
-  const isInsufficientQuantity = isSell && numericAmount > (selectedHolding?.quantity || 0);
+  const isInsufficientQuantity = isSell && numericAmount > Number(selectedHolding?.quantity || 0);
   const isBelowMinimum = !isSell && numericAmount > 0 && numericAmount < 100;
 
   const handleMax = () => {
     if (!isSell) {
-      setAmount(balance.toString());
+      setAmount(Number(balance).toString());
     } else {
-      setAmount(selectedHolding?.quantity.toString() || '0');
+      setAmount(String(selectedHolding?.quantity || 0));
     }
   };
 
@@ -96,7 +98,7 @@ const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, user, ticker, tra
       const tradeAmount = !isSell ? numericAmount : (numericAmount * currentPriceInr);
       const tradeQty = !isSell ? parseFloat(cryptoQuantity) : numericAmount;
 
-      const response = await fetch(`http://localhost:8080/trade/buy-sell`, {
+      const response = await apiFetch(`http://localhost:8080/trade/buy-sell`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -125,7 +127,7 @@ const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, user, ticker, tra
       const responseText = await response.text();
       setSuccessMessage(responseText);
       const tradeAmount1 = !isSell ? numericAmount : (numericAmount * currentPriceInr);
-      setBalance(prev => isSell ? prev + tradeAmount : prev - tradeAmount1);
+      setBalance(prev => Number(prev) + (isSell ? tradeAmount : -tradeAmount1));
       setAmount('');
       setTimeout(() => {
         setSuccessMessage(null);
@@ -141,7 +143,7 @@ const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, user, ticker, tra
     }
   };
 
-  const coinName = id ? id.charAt(0).toUpperCase() + id.slice(1) : 'Coin';
+  const coinName = name || (id ? id.charAt(0).toUpperCase() + id.slice(1) : 'Coin');
 
   return (
     <div className="buy-widget-container">
@@ -156,19 +158,23 @@ const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, user, ticker, tra
              <div className='widget-holding-info-row'>
               <div className='row'>
                  <span className='row-label'>Holdings: </span>
-                 <span className='row-value'>{selectedHolding.quantity} {id?.toUpperCase()}</span>
+                 <span className='row-value'>{Number(selectedHolding.quantity || 0)} {id?.toUpperCase()}</span>
               </div>
               <div className='row'>
                  <span className='row-label'>Avg Buy Price: </span>
-                 <span className='row-value'>₹{selectedHolding.avgBuyPrice.toFixed(2)}</span>
+                 <span className='row-value'>₹{Number(selectedHolding.avgBuyPrice || 0).toFixed(2)}</span>
               </div>
               <div className='row'>
                  <span className='row-label'>Invested: </span>
-                 <span className='row-value'>₹{(selectedHolding.quantity * selectedHolding.avgBuyPrice).toLocaleString()}</span>
+                 <span className='row-value'>₹{(Number(selectedHolding.quantity || 0) * Number(selectedHolding.avgBuyPrice || 0)).toLocaleString()}</span>
               </div>
               <div className='row'>
                  <span className='row-label'>Current Value: </span>
-                 <span className='row-value-sp'>₹{(selectedHolding.quantity * currentPriceInr).toLocaleString()}</span>
+                 <span className='row-value-sp'>
+                   {currentPriceInr > 0 
+                     ? `₹${(Number(selectedHolding.quantity || 0) * currentPriceInr).toLocaleString('en-IN', { maximumFractionDigits: 2 })}` 
+                     : '₹---'}
+                 </span>
               </div>
              </div>
            </div>
@@ -179,8 +185,8 @@ const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, user, ticker, tra
             <span>{isSell ? `Quantity to Sell (${id?.toUpperCase()})` : 'Amount to Spend (INR)'}</span>
             <span className="buy-widget-qty-preview">
                 {isSell 
-                    ? `≈ ₹${(numericAmount * currentPriceInr).toLocaleString('en-IN', { maximumFractionDigits: 2 })}` 
-                    : `≈ ${parseFloat(cryptoQuantity).toFixed(6)} ${id?.toUpperCase()}`}
+                    ? (currentPriceInr > 0 ? `≈ ₹${(numericAmount * currentPriceInr).toLocaleString('en-IN', { maximumFractionDigits: 2 })}` : '≈ ₹---')
+                    : (currentPriceInr > 0 ? `≈ ${parseFloat(cryptoQuantity).toFixed(6)} ${id?.toUpperCase()}` : `≈ --- ${id?.toUpperCase()}`)}
             </span>
           </div>
           
@@ -203,12 +209,12 @@ const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, user, ticker, tra
             {!isSell ? (
                 <>
                     <Wallet size={14} />
-                    Available: ₹{balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                    Available: ₹{Number(balance).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                 </>
             ) : (
                 <>
                     <ShieldCheck size={14} />
-                    In Portfolio: {selectedHolding?.quantity || 0} {id?.toUpperCase()}
+                    In Portfolio: {Number(selectedHolding?.quantity || 0)} {id?.toUpperCase()}
                 </>
             )}
           </div>
@@ -234,7 +240,7 @@ const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, user, ticker, tra
                 {!isSell && (
                   <button 
                     className="widget-btn-add" 
-                    onClick={() => navigate(`/profile/${user?.username}`)}
+                    onClick={() => navigate(`/profile`)}
                   >
                     Add Money
                   </button>

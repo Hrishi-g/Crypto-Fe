@@ -15,7 +15,7 @@ interface Transaction {
 }
 
 const WalletHistory: React.FC = () => {
-  const { user } = useOutletContext<{ user: any }>();
+  const { user, isAuth } = useOutletContext<{ user: any, isAuth: boolean }>();
   const navigate = useNavigate();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,10 +26,12 @@ const WalletHistory: React.FC = () => {
   const PAGE_SIZE = 20;
 
   useEffect(() => {
-    if (!user) {
+    if (!isAuth && !user) {
       navigate('/login');
       return;
     }
+    
+    if (isAuth && !user) return;
 
     const fetchHistory = async (pageToFetch: number) => {
       try {
@@ -68,7 +70,7 @@ const WalletHistory: React.FC = () => {
     };
 
     fetchHistory(0);
-  }, [user, navigate]);
+  }, [user, isAuth, navigate]);
 
   const handleLoadMore = async () => {
     const nextPage = page + 1;
@@ -171,7 +173,7 @@ const WalletHistory: React.FC = () => {
 
       <div className="balance-summary">
         <span className="balance-label">Available Balance</span>
-        <span className="balance-amount1">{formatCurrency(user?.totalAmount || user?.wallet?.balance || 0)}</span>
+        <span className="balance-amount1">{formatCurrency(transactions.length > 0 ? transactions[0].balanceAfter : (user?.wallet?.balance || 0))}</span>
       </div>
 
       {error ? (

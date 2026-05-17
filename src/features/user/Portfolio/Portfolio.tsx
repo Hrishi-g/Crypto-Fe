@@ -12,17 +12,19 @@ interface PortfolioItem {
 }
 
 const Portfolio: React.FC = () => {
-  const { user } = useOutletContext<{ user: any }>();
+  const { user, isAuth } = useOutletContext<{ user: any, isAuth: boolean }>();
   const navigate = useNavigate();
   const [portfolioData, setPortfolioData] = useState<PortfolioItem | PortfolioItem[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) {
+    if (!isAuth && !user) {
       navigate('/login');
       return;
     }
+    
+    if (isAuth && !user) return;
 
     const fetchPortfolio = async () => {
       try {
@@ -42,7 +44,7 @@ const Portfolio: React.FC = () => {
     };
 
     fetchPortfolio();
-  }, [user, navigate]);
+  }, [user, isAuth, navigate]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -101,7 +103,7 @@ const Portfolio: React.FC = () => {
         <div className="portfolio-summary">
           <div 
             className="summary-card clickable" 
-            onClick={() => navigate(`/profile/${user?.username}`, { state: { showWallet: true } })}
+            onClick={() => navigate(`/profile`, { state: { showWallet: true } })}
             title="Manage Wallet"
           >
             <span className="summary-label">Total Balance</span>
@@ -144,7 +146,7 @@ const Portfolio: React.FC = () => {
                  <button 
                    className="btn-main btn-outline" 
                    style={{ width: '100%', marginTop: 'auto', borderRadius: '8px' }}
-                   onClick={() => navigate(`/coin/${item.asset.toLowerCase()}?symbol=${item.asset.toLowerCase()}usdt`)}
+                   onClick={() => navigate(`/coin/${item.asset.toLowerCase()}?symbol=${item.asset.toLowerCase()}usd`)}
                  >
                    Trade
                  </button>

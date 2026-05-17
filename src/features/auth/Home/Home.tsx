@@ -5,6 +5,8 @@ import './Home.css';
 
 interface BinanceTicker {
   symbol: string;
+  name: string;
+  image: string;
   quoteVolume: number;
   lastPrice: string;
   priceChangePercent: string;
@@ -56,11 +58,6 @@ const Home: React.FC = () => {
     }).format(value * inrRate); // Multiply Binance's USDT price by live exchange rate
   };
 
-  const getCoinImage = (symbol: string) => {
-    const base = symbol.toLowerCase().replace('usdt', '');
-    // Coincap allows hotlinking from localhost without 403 Forbidden errors
-    return `https://assets.coincap.io/assets/icons/${base}@2x.png`;
-  };
 
   return (
     <div className="home-wrapper">
@@ -104,16 +101,16 @@ const Home: React.FC = () => {
       <div className="market-ticker">
         <div className="ticker-content">
           {cryptoData.length > 0 && [...cryptoData, ...cryptoData].map((coin, idx) => {
-            const baseSymbol = coin.symbol.replace('USDT', '');
+            const baseSymbol = coin.symbol.replace(/USDT$/, '').replace(/USD$/, '');
             const price = parseFloat(coin.lastPrice);
             const change = parseFloat(coin.priceChangePercent);
             return (
               <div 
                 key={idx} 
                 className="ticker-item clickable" 
-                onClick={() => navigate(`/coin/${baseSymbol.toLowerCase()}?symbol=${coin.symbol.toLowerCase()}`)}
+                onClick={() => navigate(`/coin/symbol=${coin.symbol.toLowerCase()}&name=${encodeURIComponent(coin.name)}`)}
               >
-                <span className="symbol">{coin.symbol}</span>
+                <span className="symbol">{coin.name}</span>
                 <span className="price">{formatCurrency(price)}</span>
                 <span className={`change ${change >= 0 ? 'up' : 'down'}`}>
                   {change.toFixed(2)}%
@@ -142,15 +139,15 @@ const Home: React.FC = () => {
         ) : (
           <div className="market-grid">
             {cryptoData.map((coin) => {
-              const baseSymbol = coin.symbol.replace('USDT', '');
+              const baseSymbol = coin.symbol.replace(/USDT$/, '').replace(/USD$/, '');
               const price = parseFloat(coin.lastPrice);
               const change = parseFloat(coin.priceChangePercent);
-              const imgUrl = getCoinImage(coin.symbol);
+              const imgUrl = coin.image;
               return (
               <div key={coin.symbol} className="coin-card">
                 <div className="coin-info">
                   {imgUrl ? (
-                    <img src={imgUrl} alt={baseSymbol} className="coin-icon" style={{objectFit: 'contain', width: '40px', height: '40px'}} 
+                    <img src={imgUrl} alt={coin.name} className="coin-icon" style={{objectFit: 'contain', width: '40px', height: '40px'}} 
                          onError={(e) => {
                            // If coincap also fails to find the coin, gracefully replace with a generic letter icon
                            (e.target as HTMLElement).style.display = 'none';
@@ -162,8 +159,8 @@ const Home: React.FC = () => {
                     {baseSymbol.substring(0, 3)}
                   </div>
                   <div>
-                    <div style={{fontWeight: 700}}>{baseSymbol}</div>
-                    <div style={{color: 'var(--text-secondary)', fontSize: '0.9rem'}}>{coin.symbol}</div>
+                    <div style={{fontWeight: 700}}>{coin.name}</div>
+                    <div style={{color: 'var(--text-secondary)', fontSize: '0.9rem'}}>{baseSymbol}</div>
                   </div>
                 </div>
                 <div className="coin-price">{formatCurrency(price)}</div>
@@ -173,7 +170,7 @@ const Home: React.FC = () => {
                 <button 
                   className="btn-main btn-outline" 
                   style={{width: '100%', marginTop: '1.5rem', borderRadius: '8px'}}
-                  onClick={() => navigate(`/coin/${baseSymbol.toLowerCase()}?symbol=${coin.symbol.toLowerCase()}`)}
+                  onClick={() => navigate(`/coin/${baseSymbol.toLowerCase()}?symbol=${coin.symbol.toLowerCase()}&name=${encodeURIComponent(coin.name)}`)}
                 >
                   Trade Now
                 </button>
