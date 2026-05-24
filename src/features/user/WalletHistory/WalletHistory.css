@@ -119,6 +119,10 @@
   color: #22c55e;
 }
 
+.tx-amount.failed {
+  color: #ef4444;
+}
+
 .tx-balance-after {
   font-size: 0.85rem;
   color: var(--text-secondary);

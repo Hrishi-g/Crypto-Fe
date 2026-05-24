@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useOutletContext, useLocation } from 'react-router-dom';
-import { User, Mail, Calendar, Wallet, Shield, CheckCircle, AlertCircle, X, Plus, Minus, Settings } from 'lucide-react';
+import { useOutletContext, useLocation } from 'react-router-dom';
+import { User, Mail, Calendar, Wallet, Shield, CheckCircle, AlertCircle, X,  Settings } from 'lucide-react';
 import { getCsrfHeaders } from '../../../utils/csrf';
 import { apiFetch } from '../../../utils/api';
 import WalletManager from './WalletManager';
@@ -82,7 +82,6 @@ const UserProfile: React.FC = () => {
       const hasChanged = 
         formData.firstName !== originalData.firstName ||
         formData.lastName !== originalData.lastName ||
-        formData.email !== originalData.email ||
         formData.dob !== originalData.dob;
 
       if (!hasChanged) {
@@ -285,8 +284,7 @@ const UserProfile: React.FC = () => {
                       type="email" 
                       name="email" 
                       value={formData.email} 
-                      onChange={handleChange} 
-                      disabled={!isEditing} 
+                      disabled={true} 
                       required
                     />
                   </div>

@@ -12,12 +12,14 @@ interface Transaction {
   price: number;
   amount: number;
   balanceAfter: number;
+  status: string;
 }
 
 const WalletHistory: React.FC = () => {
   const { user, isAuth } = useOutletContext<{ user: any, isAuth: boolean }>();
   const navigate = useNavigate();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [currentBalance, setCurrentBalance] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,27 +40,46 @@ const WalletHistory: React.FC = () => {
         if (pageToFetch === 0) setLoading(true);
         else setLoadingMore(true);
 
-        const response = await apiFetch(`http://localhost:8080/wallet/history?page=${pageToFetch}&size=${PAGE_SIZE}`);
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch transaction history');
-        }
-
-        const data = await response.json();
-        const newTransactions = Array.isArray(data) ? data : (data.content || []);
-        
         if (pageToFetch === 0) {
-          setTransactions(newTransactions);
-        } else {
-          setTransactions(prev => [...prev, ...newTransactions]);
-        }
+          const [response, profileRes] = await Promise.all([
+            apiFetch(`http://localhost:8080/wallet/history?page=${pageToFetch}&size=${PAGE_SIZE}`),
+            apiFetch(`http://localhost:8080/user/profile`)
+          ]);
 
-        // Check if there's more to load
-        // If it's a Page object from Spring, use data.last. Otherwise, check length.
-        if (data.last !== undefined) {
-          setHasMore(!data.last);
+          if (!response.ok || !profileRes.ok) {
+            throw new Error('Failed to fetch transaction data');
+          }
+
+          const data = await response.json();
+          const profileData = await profileRes.json();
+          
+          setCurrentBalance(profileData.totalAmount || 0);
+
+          const newTransactions = Array.isArray(data) ? data : (data.content || []);
+          setTransactions(newTransactions);
+
+          if (data.last !== undefined) {
+            setHasMore(!data.last);
+          } else {
+            setHasMore(newTransactions.length === PAGE_SIZE);
+          }
         } else {
-          setHasMore(newTransactions.length === PAGE_SIZE);
+          const response = await apiFetch(`http://localhost:8080/wallet/history?page=${pageToFetch}&size=${PAGE_SIZE}`);
+
+          if (!response.ok) {
+            throw new Error('Failed to fetch transaction history');
+          }
+
+          const data = await response.json();
+          const newTransactions = Array.isArray(data) ? data : (data.content || []);
+          
+          setTransactions(prev => [...prev, ...newTransactions]);
+
+          if (data.last !== undefined) {
+            setHasMore(!data.last);
+          } else {
+            setHasMore(newTransactions.length === PAGE_SIZE);
+          }
         }
 
       } catch (err: any) {
@@ -120,26 +141,27 @@ const WalletHistory: React.FC = () => {
 
   const getTxDetails = (tx: Transaction) => {
     const type = tx.type.toUpperCase();
-    const isPositive = type === 'CREDIT' || type === 'SELL';
+    const status = tx.status ? tx.status.toUpperCase() : 'SUCCESS';
+    const isPositive = (type === 'CREDIT' || type === 'SELL') && status === 'SUCCESS';
     
     let title = '';
     let Icon = Clock;
 
     switch (type) {
       case 'CREDIT':
-        title = 'Wallet Deposit';
+        title = status === 'FAILED' ? 'Wallet Deposit (Failed)' : (status === 'PENDING' ? 'Wallet Deposit (Pending)' : 'Wallet Deposit');
         Icon = ArrowDownLeft;
         break;
       case 'DEBIT':
-        title = 'Wallet Withdrawal';
+        title = status === 'FAILED' ? 'Wallet Withdrawal (Failed)' : (status === 'PENDING' ? 'Wallet Withdrawal (Pending)' : 'Wallet Withdrawal');
         Icon = ArrowUpRight;
         break;
       case 'BUY':
-        title = `Bought ${tx.asset}`;
+        title = status === 'FAILED' ? `Buy ${tx.asset} (Failed)` : `Bought ${tx.asset}`;
         Icon = ArrowUpRight;
         break;
       case 'SELL':
-        title = `Sold ${tx.asset}`;
+        title = status === 'FAILED' ? `Sell ${tx.asset} (Failed)` : `Sold ${tx.asset}`;
         Icon = ArrowDownLeft;
         break;
       default:
@@ -147,7 +169,7 @@ const WalletHistory: React.FC = () => {
         Icon = Clock;
     }
 
-    return { title, Icon, isPositive };
+    return { title, Icon, isPositive, status };
   };
 
   if (loading) {
@@ -173,7 +195,7 @@ const WalletHistory: React.FC = () => {
 
       <div className="balance-summary">
         <span className="balance-label">Available Balance</span>
-        <span className="balance-amount1">{formatCurrency(transactions.length > 0 ? transactions[0].balanceAfter : (user?.wallet?.balance || 0))}</span>
+        <span className="balance-amount1">{formatCurrency(currentBalance)}</span>
       </div>
 
       {error ? (
@@ -189,22 +211,22 @@ const WalletHistory: React.FC = () => {
       ) : (
         <div className="transaction-list">
           {transactions.map((tx, index) => {
-            const { title, Icon, isPositive } = getTxDetails(tx);
+            const { title, Icon, isPositive, status } = getTxDetails(tx);
             return (
               <div key={index} className="transaction-item">
                 <div className="tx-icon-container">
-                  <Icon size={24} color={isPositive ? '#22c55e' : '#94a3b8'} />
+                  <Icon size={24} color={status === 'FAILED' ? '#ef4444' : (isPositive ? '#22c55e' : '#94a3b8')} />
                 </div>
                 <div className="tx-details">
-                  <div className="tx-title">{title}</div>
+                  <div className="tx-title" style={{ color: status === 'FAILED' ? 'var(--text-secondary)' : 'var(--text-primary)' }}>{title}</div>
                   <div className="tx-date">{formatDate(tx.createdAt)}</div>
                 </div>
                 <div className="tx-amount-section">
-                  <div className={`tx-amount ${isPositive ? 'positive' : ''}`}>
-                    {isPositive ? '+' : ''}{formatCurrency(tx.amount)}
+                  <div className={`tx-amount ${status === 'FAILED' ? 'failed' : (isPositive ? 'positive' : '')}`}>
+                    {status === 'FAILED' ? '' : (isPositive ? '+' : '')}{formatCurrency(tx.amount)}
                   </div>
                   <div className="tx-balance-after">
-                    Bal: {formatCurrency(tx.balanceAfter)}
+                    {status === 'FAILED' ? 'FAILED' : (status === 'PENDING' ? 'PENDING' : `Bal: ${formatCurrency(tx.balanceAfter)}`)}
                   </div>
                 </div>
               </div>

@@ -19,7 +19,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
 
   const handleLogout = async () => {
     try {
-      await fetch("http://localhost:8080/auth/logout", {
+      await fetch("http://localhost:8080/user/logout", {
         method: "POST",
         headers: {
           ...getCsrfHeaders()

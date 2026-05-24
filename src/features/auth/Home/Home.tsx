@@ -207,12 +207,12 @@ const Home: React.FC = () => {
         <p style={{color: 'var(--text-secondary)', maxWidth: '600px', margin: '0 auto 2rem'}}>
           The next generation of crypto trading is here. Join millions of users and start building your portfolio today.
         </p>
-        <div className="nav-links" style={{justifyContent: 'center', marginBottom: '2rem', display: 'flex'}}>
+        {/* <div className="nav-links" style={{justifyContent: 'center', marginBottom: '2rem', display: 'flex'}}>
           <a href="#">Terms</a>
           <a href="#">Privacy</a>
           <a href="#">Support</a>
           <a href="#">API</a>
-        </div>
+        </div> */}
         <div style={{color: 'var(--text-secondary)', fontSize: '0.85rem'}}>
           © 2024 Cryptx Trading Ltd. All rights reserved.
         </div>
