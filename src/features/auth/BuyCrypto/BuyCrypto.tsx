@@ -36,6 +36,7 @@ const BuyCrypto: React.FC = () => {
   const [amount, setAmount] = useState<string>(''); // Can be INR or Crypto depending on logic
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const ws = useRef<WebSocket | null>(null);
 
@@ -148,10 +149,7 @@ const BuyCrypto: React.FC = () => {
     }
   };
 
-  const handleProceed = async () => {
-    if (tradeType === 'BUY' && (numericAmount < 100 || numericAmount > balance)) return;
-    if (tradeType === 'SELL' && (numericAmount <= 0 || numericAmount > (selectedHolding?.quantity || 0))) return;
-    
+  const executeTrade = async () => {
     setIsProcessing(true);
     setErrorMessage(null);
     try {
@@ -205,6 +203,12 @@ const BuyCrypto: React.FC = () => {
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleProceed = () => {
+    if (tradeType === 'BUY' && (numericAmount < 100 || numericAmount > balance)) return;
+    if (tradeType === 'SELL' && (numericAmount <= 0 || numericAmount > (selectedHolding?.quantity || 0))) return;
+    setShowConfirmModal(true);
   };
 
   const coinName = id ? id.charAt(0).toUpperCase() + id.slice(1) : 'Coin';
@@ -383,6 +387,63 @@ const BuyCrypto: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {showConfirmModal && (
+        <div className="modal-overlay" onClick={() => setShowConfirmModal(false)}>
+          <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <h3 className="confirm-modal-title">Confirm {tradeType === 'BUY' ? 'Purchase' : 'Sale'}</h3>
+            <div className="confirm-modal-details">
+              <div className="confirm-detail-row">
+                <span className="confirm-label">Asset</span>
+                <span className="confirm-value">{coinName} ({id?.toUpperCase()})</span>
+              </div>
+              <div className="confirm-detail-row">
+                <span className="confirm-label">Action</span>
+                <span className={`confirm-value trade-type-${tradeType.toLowerCase()}`}>
+                  {tradeType}
+                </span>
+              </div>
+              <div className="confirm-detail-row">
+                <span className="confirm-label">Current Price</span>
+                <span className="confirm-value">₹{currentPriceInr.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}</span>
+              </div>
+              <div className="confirm-detail-row">
+                <span className="confirm-label">Quantity</span>
+                <span className="confirm-value">
+                  {tradeType === 'BUY' 
+                    ? `${parseFloat(cryptoQuantity).toFixed(6)} ${id?.toUpperCase()}`
+                    : `${numericAmount.toFixed(6)} ${id?.toUpperCase()}`}
+                </span>
+              </div>
+              <div className="confirm-detail-row highlight-row">
+                <span className="confirm-label">Total Cost</span>
+                <span className="confirm-value">
+                  ₹{(tradeType === 'BUY' ? numericAmount : (numericAmount * currentPriceInr)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+            </div>
+            <div className="modal-actions">
+              <button 
+                className="btn-main btn-outline" 
+                onClick={() => setShowConfirmModal(false)}
+                style={{ flex: 1 }}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn-main" 
+                onClick={() => {
+                  setShowConfirmModal(false);
+                  executeTrade();
+                }}
+                style={{ flex: 1, background: tradeType === 'SELL' ? '#f44336' : '#bd34fe', color: 'white', border: 'none' }}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

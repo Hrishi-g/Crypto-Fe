@@ -230,3 +230,80 @@ border: 1px solid rgba(189, 52, 254, 0.2);
   font-size: 0.85rem;
   cursor: pointer;
 }
+
+/* Confirm Modal Styling */
+.confirm-modal {
+  background: #111115;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 2.2rem 2rem;
+  border-radius: 24px;
+  width: 90%;
+  max-width: 440px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  animation: slideUpModal 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  color: #f8fafc;
+  text-align: left;
+}
+
+.confirm-modal-title {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 1rem;
+  letter-spacing: -0.5px;
+}
+
+.confirm-modal-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.confirm-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+}
+
+.confirm-label {
+  color: #94a3b8;
+}
+
+.confirm-value {
+  font-weight: 600;
+  color: #fff;
+}
+
+.confirm-value.trade-type-buy {
+  color: #00ff88;
+  font-weight: 700;
+}
+
+.confirm-value.trade-type-sell {
+  color: #ff4d4d;
+  font-weight: 700;
+}
+
+.confirm-detail-row.highlight-row {
+  background: rgba(189, 52, 254, 0.08);
+  border: 1px solid rgba(189, 52, 254, 0.2);
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  margin-top: 0.5rem;
+  font-size: 1.05rem;
+}
+
+.confirm-detail-row.highlight-row .confirm-label {
+  color: #fff;
+  font-weight: 600;
+}
+
+.confirm-detail-row.highlight-row .confirm-value {
+  color: #00ff88;
+  font-size: 1.15rem;
+  font-weight: 800;
+}

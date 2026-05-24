@@ -97,7 +97,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
                 className="profile-avatar"
                 title="User Profile"
               >
-                {user.navAvatar ? user.navAvatar.charAt(0).toUpperCase() : 'U'}
+              {user.navAvatar ? user.navAvatar.charAt(0).toUpperCase() : (user.username ? user.username.charAt(0).toUpperCase() : 'U')}
               </div>
               <div 
                 onClick={() => setShowLogoutModal(true)}
@@ -135,7 +135,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
                 }}
               >
                 <div className="profile-avatar-small">
-                  {user.navAvatar ? user.navAvatar: 'U'}
+                  {user.navAvatar ? user.navAvatar.charAt(0).toUpperCase() : (user.username ? user.username.charAt(0).toUpperCase() : 'U')}
                 </div>
                 <span>Profile</span>
               </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getCsrfHeaders } from '../../../utils/csrf';
 import { apiFetch } from '../../../utils/api';
 import { ArrowUpCircle, ArrowDownCircle, IndianRupee, Loader2 } from 'lucide-react';
@@ -24,6 +24,43 @@ const WalletManager: React.FC<WalletManagerProps> = ({ balance, onUpdateBalance 
     }).format(val);
   };
 
+  const cleanupRazorpay = () => {
+    // 1. Remove the script tag if present
+    const script = document.getElementById('razorpay-script');
+    if (script) {
+      script.remove();
+    }
+    // 2. Remove the Razorpay global object to prevent stale state issues
+    if ((window as any).Razorpay) {
+      delete (window as any).Razorpay;
+    }
+    // 3. Remove all leftover Razorpay iframe containers from the DOM
+    const containers = document.querySelectorAll('.razorpay-container');
+    containers.forEach(container => container.remove());
+  };
+
+  useEffect(() => {
+    // Cleanup Razorpay DOM elements when component unmounts
+    return () => {
+      cleanupRazorpay();
+    };
+  }, []);
+
+  const loadRazorpayScript = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if ((window as any).Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement('script');
+      script.id = 'razorpay-script';
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const handleTransaction = async (type: 'CREDIT' | 'DEBIT') => {
     const val = parseFloat(amount);
     if (isNaN(val) || val <= 0) {
@@ -42,38 +79,134 @@ const WalletManager: React.FC<WalletManagerProps> = ({ balance, onUpdateBalance 
     setLoading(true);
     setError(null);
     setSuccess(null);
-    
-    const newBalance = type === 'CREDIT' ? balance + val : balance - val;
 
-    try {
-      const res = await apiFetch(`http://localhost:8080/wallet/update`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getCsrfHeaders()
-        },
-        body: JSON.stringify({
-          amount: val,
-          type: type
-        })
-      });
+    if (type === 'CREDIT') {
+      try {
+        const scriptLoaded = await loadRazorpayScript();
+        if (!scriptLoaded) {
+          throw new Error("Razorpay SDK failed to load. Please check your internet connection.");
+        }
 
-      if (!res.ok) {
-        throw new Error("Transaction failed. Please try again.");
+        const orderRes = await apiFetch(`http://localhost:8080/payment/razorpay/create-order`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getCsrfHeaders()
+          },
+          body: JSON.stringify(val)
+        });
+
+        if (!orderRes.ok) {
+          const errText = await orderRes.text();
+          throw new Error(errText || "Failed to create payment order");
+        }
+
+        const orderData = await orderRes.json();
+
+        const options = {
+          key: orderData.key,
+          amount: orderData.amount,
+          currency: orderData.currency,
+          name: "Cryptx",
+          description: "Wallet Deposit",
+          order_id: orderData.orderId,
+          handler: async (response: any) => {
+            setLoading(true);
+            try {
+              const verifyRes = await apiFetch(`http://localhost:8080/payment/razorpay/verify`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  ...getCsrfHeaders()
+                },
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                  amount: val
+                })
+              });
+
+              if (!verifyRes.ok) {
+                const verifyErr = await verifyRes.json();
+                throw new Error(verifyErr.message || "Payment verification failed");
+              }
+
+              onUpdateBalance(balance + val);
+              setAmount('');
+              setSuccess(`Successfully credited ${formatINR(val)} via Razorpay`);
+              setTimeout(() => setSuccess(null), 4000);
+            } catch (err: any) {
+              setError(err.message || "Verification failed");
+            } finally {
+              setLoading(false);
+              cleanupRazorpay();
+            }
+          },
+          theme: {
+            color: "#bd34fe"
+          },
+          modal: {
+            ondismiss: async () => {
+              setLoading(false);
+              cleanupRazorpay();
+              try {
+                await apiFetch(`http://localhost:8080/payment/razorpay/cancel`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    ...getCsrfHeaders()
+                  },
+                  body: JSON.stringify({ orderId: orderData.orderId })
+                });
+              } catch (e) {
+                console.error("Failed to cancel payment in DB:", e);
+              }
+            }
+          }
+        };
+
+        const paymentObject = new (window as any).Razorpay(options);
+        paymentObject.open();
+
+      } catch (err: any) {
+        setError(err.message || "Razorpay setup failed");
+        setLoading(false);
+        cleanupRazorpay();
       }
+    } else {
+      // DEBIT (Withdrawal) flow
+      const newBalance = balance - val;
+      try {
+        const res = await apiFetch(`http://localhost:8080/wallet/update`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getCsrfHeaders()
+          },
+          body: JSON.stringify({
+            amount: val,
+            type: type
+          })
+        });
 
-      onUpdateBalance(newBalance);
-      setAmount('');
-      setSuccess(`Successfully ${type === 'CREDIT' ? 'credited' : 'debited'} ${formatINR(val)}`);
-      
-      setTimeout(() => {
-        setSuccess(null);
-      }, 4000);
-      
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+        if (!res.ok) {
+          throw new Error("Transaction failed. Please try again.");
+        }
+
+        onUpdateBalance(newBalance);
+        setAmount('');
+        setSuccess(`Successfully debited ${formatINR(val)}`);
+        
+        setTimeout(() => {
+          setSuccess(null);
+        }, 4000);
+        
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
