@@ -48,7 +48,7 @@ const AppLayout = () => {
     const checkSession = async () => {
       try {
         const { apiFetch } = await import('./utils/api');
-        const res = await apiFetch('http://localhost:8080/auth/check');
+        const res = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/auth/check`);
 
         if (res.ok) {
           const authData = await res.json();

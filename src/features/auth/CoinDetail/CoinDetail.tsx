@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
+import { useNavigate, useLocation, useOutletContext } from 'react-router-dom';
 import { TrendingUp, TrendingDown, Activity, BarChart3, Clock, Zap, History } from 'lucide-react';
 import BuyCryptoWidget from '../BuyCrypto/BuyCryptoWidget';
 import { apiFetch } from '../../../utils/api';
@@ -61,7 +61,7 @@ const CoinDetail: React.FC = () => {
   useEffect(() => {
     const fetchRate = async () => {
       try {
-        const res = await apiFetch('http://localhost:8080/home/crypto/exchange-rate');
+        const res = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/home/crypto/exchange-rate`);
         if (res.ok) {
           const rate = await res.json();
           setInrRate(rate);
@@ -93,7 +93,7 @@ const CoinDetail: React.FC = () => {
 
                         : `${activeSymbol.toUpperCase()}USDT`;
 
-        const res = await apiFetch(`http://localhost:8080/home/crypto/historical-data?symbol=${binanceSymbol}&interval=15m&limit=96`);
+        const res = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/home/crypto/historical-data?symbol=${binanceSymbol}&interval=15m&limit=96`);
         if (res.ok) {
           const result = await res.json();
           // result.tickerData is directly array of klines
@@ -129,7 +129,7 @@ const CoinDetail: React.FC = () => {
     // Our new homepage passes "BTCUSDT" directly, prevent "btcusdtusdt"
     const lowerSymbol = activeSymbol.toLowerCase();
     const binanceSymbol = lowerSymbol.endsWith('usdt') ? lowerSymbol : `${lowerSymbol}usdt`;
-    const socketUrl = `ws://localhost:8080/ws/crypto/${binanceSymbol}`;
+    const socketUrl = `${import.meta.env.VITE_WEBSOCKET_URL}/ws/crypto/${binanceSymbol}`;
     ws.current = new WebSocket(socketUrl);
 
     ws.current.onopen = () => setIsConnected(true);

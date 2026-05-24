@@ -23,8 +23,7 @@ const BuyCrypto: React.FC = () => {
   const symbol = searchParams.get('symbol') || `${id}usdt`.toLowerCase();
 
   const navigate = useNavigate();
-  const context = useOutletContext<{ user: any }>();
-  const user = context?.user;
+  const { user, setUser } = useOutletContext<{ user: any, setUser: (user: any) => void }>();
 
   const [ticker, setTicker] = useState<BinanceTicker | null>(null);
   const [inrRate, setInrRate] = useState<number | null>(null);
@@ -44,7 +43,7 @@ const BuyCrypto: React.FC = () => {
   useEffect(() => {
     const fetchRate = async () => {
       try {
-        const res = await apiFetch('http://localhost:8080/home/crypto/exchange-rate');
+        const res = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/home/crypto/exchange-rate`);
         if (res.ok) {
           const rate = await res.json();
           setInrRate(rate);
@@ -86,7 +85,7 @@ const BuyCrypto: React.FC = () => {
   useEffect(() => {
     const fetchPortfolio = async () => {
       try {
-        const res = await apiFetch('http://localhost:8080/portfolio/get');
+        const res = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/portfolio/get`);
         if (res.ok) {
           const data = await res.json();
           const items = Array.isArray(data) ? data : [data];
@@ -109,7 +108,7 @@ const BuyCrypto: React.FC = () => {
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const res = await apiFetch(`http://localhost:8080/user/profile`);
+        const res = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/user/profile`);
         if (res.ok) {
           const data = await res.json();
           setBalance(data.totalAmount || 0);
@@ -156,7 +155,7 @@ const BuyCrypto: React.FC = () => {
       const tradeAmount = tradeType === 'BUY' ? numericAmount : (numericAmount * currentPriceInr);
       const tradeQty = tradeType === 'BUY' ? parseFloat(cryptoQuantity) : numericAmount;
 
-      const response = await apiFetch(`http://localhost:8080/trade/buy-sell`, {
+      const response = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/trade/buy-sell`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -184,10 +183,10 @@ const BuyCrypto: React.FC = () => {
       const responseText = await response.text();
       setSuccessMessage(responseText);
       
-      if (tradeType === 'BUY') {
-        setBalance(prev => prev - tradeAmount);
-      } else {
-        setBalance(prev => prev + tradeAmount);
+      const newBal = tradeType === 'BUY' ? balance - tradeAmount : balance + tradeAmount;
+      setBalance(newBal);
+      if (setUser) {
+        setUser((prev: any) => prev ? { ...prev, totalAmount: newBal } : null);
       }
       
       setAmount('');

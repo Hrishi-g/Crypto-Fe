@@ -87,7 +87,7 @@ const WalletManager: React.FC<WalletManagerProps> = ({ balance, onUpdateBalance 
           throw new Error("Razorpay SDK failed to load. Please check your internet connection.");
         }
 
-        const orderRes = await apiFetch(`http://localhost:8080/payment/razorpay/create-order`, {
+        const orderRes = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/payment/razorpay/create-order`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -113,7 +113,7 @@ const WalletManager: React.FC<WalletManagerProps> = ({ balance, onUpdateBalance 
           handler: async (response: any) => {
             setLoading(true);
             try {
-              const verifyRes = await apiFetch(`http://localhost:8080/payment/razorpay/verify`, {
+              const verifyRes = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/payment/razorpay/verify`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -151,7 +151,7 @@ const WalletManager: React.FC<WalletManagerProps> = ({ balance, onUpdateBalance 
               setLoading(false);
               cleanupRazorpay();
               try {
-                await apiFetch(`http://localhost:8080/payment/razorpay/cancel`, {
+                await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/payment/razorpay/cancel`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
@@ -178,7 +178,7 @@ const WalletManager: React.FC<WalletManagerProps> = ({ balance, onUpdateBalance 
       // DEBIT (Withdrawal) flow
       const newBalance = balance - val;
       try {
-        const res = await apiFetch(`http://localhost:8080/wallet/update`, {
+        const res = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/wallet/update`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

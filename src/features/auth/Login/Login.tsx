@@ -31,7 +31,7 @@ const Login: React.FC = () => {
     setMessage(null);
     
     try {
-      const response = await fetch('http://localhost:8080/auth/login', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
         body: JSON.stringify(data),
@@ -49,7 +49,7 @@ const Login: React.FC = () => {
 
         // Call /user/profile to populate backend cache for subsequent API calls
         try {
-          const profileRes = await apiFetch('http://localhost:8080/user/profile', {
+          const profileRes = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/user/profile`, {
             method: 'GET',
             credentials: 'include'
           });
@@ -102,7 +102,7 @@ const Login: React.FC = () => {
     setMessage(null);
 
     try {
-      const response = await fetch('http://localhost:8080/auth/send-reset-password-link', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/send-reset-password-link`, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
         body: resetEmail
@@ -228,7 +228,7 @@ const Login: React.FC = () => {
             <button 
               type="button" 
               className="oauth-button google"
-              onClick={() => window.location.href = 'http://localhost:8080/oauth2/authorization/google'}
+              onClick={() => window.location.href = `${import.meta.env.VITE_BACKEND_URL}/oauth2/authorization/google`}
             >
               <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
               Continue with Google

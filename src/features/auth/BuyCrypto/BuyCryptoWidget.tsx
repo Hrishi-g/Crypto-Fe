@@ -41,8 +41,8 @@ const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, name, user, ticke
     const fetchUserProfile = async () => {
       try {
         const [profileRes, portfolioRes] = await Promise.all([
-          apiFetch(`http://localhost:8080/user/profile`, { credentials: 'include' }),
-          apiFetch(`http://localhost:8080/portfolio/get`, { credentials: 'include' })
+          apiFetch(`${import.meta.env.VITE_BACKEND_URL}/user/profile`, { credentials: 'include' }),
+          apiFetch(`${import.meta.env.VITE_BACKEND_URL}/portfolio/get`, { credentials: 'include' })
         ]);
         
         if (profileRes.ok) {
@@ -95,7 +95,7 @@ const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, name, user, ticke
       const tradeAmount = !isSell ? numericAmount : (numericAmount * currentPriceInr);
       const tradeQty = !isSell ? parseFloat(cryptoQuantity) : numericAmount;
 
-      const response = await apiFetch(`http://localhost:8080/trade/buy-sell`, {
+      const response = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/trade/buy-sell`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

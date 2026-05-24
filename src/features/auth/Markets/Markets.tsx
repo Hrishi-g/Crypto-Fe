@@ -41,7 +41,7 @@ const Markets: React.FC = () => {
       setLoading(true);
       try {
         const queryParam = debouncedQuery ? `&query=${encodeURIComponent(debouncedQuery)}` : '';
-        const response = await apiFetch(`http://localhost:8080/home/crypto/all-crypto?page=${page}&perPage=${perPage}${queryParam}`);
+        const response = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/home/crypto/all-crypto?page=${page}&perPage=${perPage}${queryParam}`);
         if (response.ok) {
           const data = await response.json();
           setCryptoData(data);

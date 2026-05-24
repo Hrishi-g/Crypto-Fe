@@ -39,7 +39,7 @@ const ResetPassword = () => {
     setMessage(null);
     
     try {
-      const response = await fetch(`http://localhost:8080/auth/reset-password?token=${encodeURIComponent(token)}`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/reset-password?token=${encodeURIComponent(token)}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'text/plain',

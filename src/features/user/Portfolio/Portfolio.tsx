@@ -28,7 +28,7 @@ const Portfolio: React.FC = () => {
 
     const fetchPortfolio = async () => {
       try {
-        const response = await apiFetch('http://localhost:8080/portfolio/get');
+        const response = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/portfolio/get`);
 
         if (!response.ok) {
           throw new Error('Failed to fetch portfolio data');

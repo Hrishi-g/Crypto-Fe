@@ -22,7 +22,7 @@ const Home: React.FC = () => {
   useEffect(() => {
     const fetchRate = async () => {
       try {
-        const res = await apiFetch('http://localhost:8080/home/crypto/exchange-rate');
+        const res = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/home/crypto/exchange-rate`);
         if (res.ok) {
           const rate = await res.json();
           setInrRate(rate);
@@ -35,7 +35,7 @@ const Home: React.FC = () => {
 
     const fetchTopCrypto = async () => {
       try {
-        const response = await apiFetch('http://localhost:8080/home/crypto/top-crypto');
+        const response = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/home/crypto/top-crypto`);
         if (response.ok) {
           const data = await response.json();
           setCryptoData(data);

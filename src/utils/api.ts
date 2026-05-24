@@ -33,7 +33,7 @@ export async function apiFetch(url: string, options: RequestInit = {}): Promise<
     if (!isRefreshing) {
       isRefreshing = true;
       try {
-        const refreshResponse = await fetch('http://localhost:8080/auth/refresh', {
+        const refreshResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/refresh`, {
           method: 'POST',
           headers: getCsrfHeaders(),
           credentials: 'include'

@@ -42,8 +42,8 @@ const WalletHistory: React.FC = () => {
 
         if (pageToFetch === 0) {
           const [response, profileRes] = await Promise.all([
-            apiFetch(`http://localhost:8080/wallet/history?page=${pageToFetch}&size=${PAGE_SIZE}`),
-            apiFetch(`http://localhost:8080/user/profile`)
+            apiFetch(`${import.meta.env.VITE_BACKEND_URL}/wallet/history?page=${pageToFetch}&size=${PAGE_SIZE}`),
+            apiFetch(`${import.meta.env.VITE_BACKEND_URL}/user/profile`)
           ]);
 
           if (!response.ok || !profileRes.ok) {
@@ -64,7 +64,7 @@ const WalletHistory: React.FC = () => {
             setHasMore(newTransactions.length === PAGE_SIZE);
           }
         } else {
-          const response = await apiFetch(`http://localhost:8080/wallet/history?page=${pageToFetch}&size=${PAGE_SIZE}`);
+          const response = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/wallet/history?page=${pageToFetch}&size=${PAGE_SIZE}`);
 
           if (!response.ok) {
             throw new Error('Failed to fetch transaction history');
@@ -99,7 +99,7 @@ const WalletHistory: React.FC = () => {
     
     try {
       setLoadingMore(true);
-      const response = await apiFetch(`http://localhost:8080/wallet/history?page=${nextPage}&size=${PAGE_SIZE}`);
+      const response = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/wallet/history?page=${nextPage}&size=${PAGE_SIZE}`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch more transactions');

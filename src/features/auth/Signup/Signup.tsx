@@ -46,7 +46,7 @@ const Signup: React.FC = () => {
         role: data.role
       };
 
-      const response = await fetch('http://localhost:8080/auth/signup', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -207,7 +207,7 @@ const Signup: React.FC = () => {
               <button 
                 type="button" 
                 className="oauth-button google"
-                onClick={() => window.location.href = 'http://localhost:8080/oauth2/authorization/google'}
+                onClick={() => window.location.href = `${import.meta.env.VITE_BACKEND_URL}/oauth2/authorization/google`}
               >
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
                 Continue with Google

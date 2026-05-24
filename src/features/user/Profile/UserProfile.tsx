@@ -38,7 +38,7 @@ const UserProfile: React.FC = () => {
   const [isSendingLink, setIsSendingLink] = useState(false);
   const fetchUserProfile = async () => {
       try {
-          const res = await apiFetch(`http://localhost:8080/user/profile`);
+          const res = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/user/profile`);
           if (res.ok) {
               const data = await res.json();
               const updatedData = {
@@ -91,7 +91,7 @@ const UserProfile: React.FC = () => {
     }
 
     try {
-      const response = await apiFetch(`http://localhost:8080/user/update/profile`, {
+      const response = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/user/update/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -125,7 +125,7 @@ const UserProfile: React.FC = () => {
     setMessage(null);
     setIsSendingLink(true);
     try {
-      const response = await apiFetch('http://localhost:8080/auth/send-reset-password-link', {
+      const response = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/auth/send-reset-password-link`, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
         body: formData.email
