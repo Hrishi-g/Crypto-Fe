@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getCsrfHeaders } from "../../../utils/csrf";
+import { apiFetch, clearCsrfToken } from "../../../utils/api";
 import { PieChart, History, BarChart3, LogOut, Menu, X } from "lucide-react";
 import "./Navbar.css";
 
@@ -19,13 +20,11 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
 
   const handleLogout = async () => {
     try {
-      await fetch(`${import.meta.env.VITE_BACKEND_URL}/user/logout`, {
-        method: "POST",
-        headers: {
-          ...getCsrfHeaders()
-        },
-        credentials: "include",
+      await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/user/logout`, {
+        method: "POST"
       });
+      // Clear CSRF token on logout so a fresh one is fetched next time
+      clearCsrfToken();
       setUser(null);
       setShowLogoutModal(false);
       navigate("/");

@@ -3,7 +3,7 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { User, Lock, Eye, EyeOff } from 'lucide-react';
 import { getCsrfHeaders } from '../../../utils/csrf';
-import { apiFetch } from '../../../utils/api';
+import { apiFetch, clearCsrfToken } from '../../../utils/api';
 import './Login.css';
 
 interface LoginFormData {
@@ -46,6 +46,9 @@ const Login: React.FC = () => {
             userData = await response.json();
             setUser(userData);
         }
+
+        // Clear CSRF token to fetch a new one for the newly logged-in session
+        clearCsrfToken();
 
         // Call /user/profile to populate backend cache for subsequent API calls
         try {
@@ -228,7 +231,7 @@ const Login: React.FC = () => {
             <button 
               type="button" 
               className="oauth-button google"
-              onClick={() => window.location.href = `${import.meta.env.VITE_BACKEND_URL}/oauth2/authorization/google`}
+              onClick={() => window.location.href = `${import.meta.env.VITE_AUTH_URL}/oauth2/authorization/google`}
             >
               <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
               Continue with Google

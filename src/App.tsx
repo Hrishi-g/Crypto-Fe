@@ -14,6 +14,7 @@ import Portfolio from './features/user/Portfolio/Portfolio';
 import WalletHistory from './features/user/WalletHistory/WalletHistory';
 import SetPasswordModal from './features/auth/SetPassword/SetPasswordModal';
 import ResetPassword from './features/auth/ResetPassword/ResetPassword';
+import OAuth2RedirectHandler from './features/auth/OAuth2RedirectHandler/OAuth2RedirectHandler';
 
 const AppLayout = () => {
   const [user, setUser] = useState<any>(null);
@@ -48,7 +49,9 @@ const AppLayout = () => {
     const checkSession = async () => {
       try {
         const { apiFetch } = await import('./utils/api');
-        const res = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/auth/check`);
+        const res = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/auth/check?t=${Date.now()}`, {
+          cache: 'no-store'
+        });
 
         if (res.ok) {
           const authData = await res.json();
@@ -118,8 +121,8 @@ const router = createBrowserRouter([
       { path: "/portfolio", element: <Portfolio /> },
       { path: "/wallet/history", element: <WalletHistory /> },
       { path: "/reset-password", element: <ResetPassword /> },
-        { path: "*", element: <NotFound /> }
-
+      { path: "/oauth2-redirect", element: <OAuth2RedirectHandler /> },
+      { path: "*", element: <NotFound /> }
     ]
   }
 ]);

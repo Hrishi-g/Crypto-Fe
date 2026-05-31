@@ -146,7 +146,7 @@ const Portfolio: React.FC = () => {
                  <button 
                    className="btn-main btn-outline" 
                    style={{ width: '100%', marginTop: 'auto', borderRadius: '8px' }}
-                   onClick={() => navigate(`/coin/${item.asset.toLowerCase()}?symbol=${item.asset.toLowerCase()}usd`)}
+                   onClick={() => navigate(`/coin/${item.asset.toLowerCase()}?symbol=${item.asset.toLowerCase()}usdt`)}
                  >
                    Trade
                  </button>
