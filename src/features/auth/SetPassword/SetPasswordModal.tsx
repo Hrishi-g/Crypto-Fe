@@ -35,7 +35,7 @@ const SetPasswordModal: React.FC<SetPasswordModalProps> = ({ onClose, onSuccess 
     setError(null);
     
     try {
-      const response = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/auth/set-password`, {
+      const response = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/user/set-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
