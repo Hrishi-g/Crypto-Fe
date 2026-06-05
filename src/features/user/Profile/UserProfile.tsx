@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useOutletContext, useLocation } from 'react-router-dom';
+import { useOutletContext, useLocation, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { User, Mail, Calendar, Wallet, Shield, CheckCircle, AlertCircle, X,  Settings } from 'lucide-react';
 import { getCsrfHeaders } from '../../../utils/csrf';
 import { apiFetch } from '../../../utils/api';
@@ -17,6 +18,8 @@ interface UserProfileData {
 }
 
 const UserProfile: React.FC = () => {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const location = useLocation();
   const { user, setUser } = useOutletContext<{ user: any, setUser: (u: any) => void }>();
   const [isEditing, setIsEditing] = useState(false);
@@ -111,6 +114,7 @@ const UserProfile: React.FC = () => {
       
       if (user) {
         setUser({ ...user, ...formData });
+        queryClient.invalidateQueries({ queryKey: ['userProfile', user.id] });
       }
     } catch (err: any) {
       setError(err.message);

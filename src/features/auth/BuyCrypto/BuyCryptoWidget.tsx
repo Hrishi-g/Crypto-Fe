@@ -145,7 +145,8 @@ const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, name, user, ticke
   };
 
   const handleProceed = () => {
-    if (!userProfile?.firstName || !userProfile?.lastName || (!userProfile?.hasDob && !userProfile?.dob)) {
+    const profile = userProfile || user;
+    if (!profile?.firstName || !profile?.lastName || (!profile?.hasDob && !profile?.dob)) {
       toast.error('Please complete your profile details to perform trades.', {
         style: {
           borderRadius: '10px',
