@@ -14,6 +14,17 @@ export default defineConfig(({ mode }) => {
           rewrite: (path) => path.replace(/^\/api/, '')
         }
       }
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ['react', 'react-dom', 'react-router-dom'],
+            ui: ['lucide-react', 'lightweight-charts'],
+            query: ['@tanstack/react-query']
+          }
+        }
+      }
     }
   }
-})
+});

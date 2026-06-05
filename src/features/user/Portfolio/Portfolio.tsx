@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Wallet, TrendingUp, PieChart, History } from 'lucide-react';
@@ -7,11 +7,6 @@ import CryptoIcon from '../../../components/CryptoIcon/CryptoIcon';
 
 import './Portfolio.css';
 
-interface PortfolioItem {
-  asset: string;
-  quantity: number;
-  avgBuyPrice: number;
-}
 
 
 

@@ -95,7 +95,7 @@ export async function apiFetch(url: string, options: RequestInit = {}): Promise<
       }
     } else {
       // Wait for the ongoing refresh to finish
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve) => {
         subscribeTokenRefresh((success) => {
           if (success) {
             resolve(fetch(url, fetchOptions));

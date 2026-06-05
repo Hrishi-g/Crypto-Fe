@@ -101,7 +101,7 @@ const Home: React.FC = () => {
       <div className="market-ticker">
         <div className="ticker-content">
           {cryptoData.length > 0 && [...cryptoData, ...cryptoData].map((coin, idx) => {
-            const baseSymbol = coin.symbol.replace(/USDT$/, '').replace(/USD$/, '');
+
             const price = parseFloat(coin.lastPrice);
             const change = parseFloat(coin.priceChangePercent);
             return (

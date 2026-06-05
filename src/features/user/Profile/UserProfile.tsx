@@ -153,13 +153,6 @@ const UserProfile: React.FC = () => {
     }
   };
 
-  const getInitials = () => {
-    if (formData.firstName && formData.lastName) {
-      return `${formData.firstName[0]}${formData.lastName[0]}`;
-    }
-    return formData.username?.[0] || 'U';
-  };
-
   return (
     <div className="user-profile-container">
       {user?.hasPassword === false && (

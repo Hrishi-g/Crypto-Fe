@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Wallet, TrendingUp, TrendingDown, Info, ShieldCheck, AlertCircle, Activity } from 'lucide-react';
+import { ArrowLeft, Wallet, TrendingUp, TrendingDown, Info, ShieldCheck, AlertCircle } from 'lucide-react';
 import { getCsrfHeaders } from '../../../utils/csrf';
 import { apiFetch } from '../../../utils/api';
 import CryptoIcon from '../../../components/CryptoIcon/CryptoIcon';
@@ -122,8 +122,7 @@ const BuyCrypto: React.FC = () => {
   // Validation
   const isInsufficientFunds = tradeType === 'BUY' && numericAmount > balance;
   const isInsufficientQuantity = tradeType === 'SELL' && Number(cryptoQuantity) > (selectedHolding?.quantity || 0);
-  const isBuyMinValid = tradeType === 'BUY' && numericAmount >= 100;
-  const isSellMinValid = tradeType === 'SELL' && numericAmount >= 100;
+
   const isBelowMinimum = numericAmount > 0 && numericAmount < 100;
 
   const handleMax = () => {
