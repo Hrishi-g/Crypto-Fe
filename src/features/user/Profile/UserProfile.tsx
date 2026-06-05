@@ -18,7 +18,6 @@ interface UserProfileData {
 }
 
 const UserProfile: React.FC = () => {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const location = useLocation();
   const { user, setUser } = useOutletContext<{ user: any, setUser: (u: any) => void }>();
