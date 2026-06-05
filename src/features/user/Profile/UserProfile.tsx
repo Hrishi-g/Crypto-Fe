@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useOutletContext, useLocation, useNavigate } from 'react-router-dom';
+import { useOutletContext, useLocation } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { User, Mail, Calendar, Wallet, Shield, CheckCircle, AlertCircle, X,  Settings } from 'lucide-react';
 import { getCsrfHeaders } from '../../../utils/csrf';
