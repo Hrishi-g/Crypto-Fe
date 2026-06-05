@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation, useOutletContext } from 'react-router-dom';
 import { TrendingUp, TrendingDown, Activity, BarChart3, Clock, Zap, History } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import BuyCryptoWidget from '../BuyCrypto/BuyCryptoWidget';
+import CryptoChart from '../../../components/CryptoChart/CryptoChart';
 import { apiFetch } from '../../../utils/api';
 import './CoinDetail.css';
 
@@ -44,89 +46,60 @@ const CoinDetail: React.FC = () => {
   const user = context?.user;
   const [ticker, setTicker] = useState<BinanceTicker | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [inrRate, setInrRate] = useState<number | null>(null);
   const [priceHistory, setPriceHistory] = useState<number[]>([]);
   const [activePanel, setActivePanel] = useState<'stats' | 'buy' | 'sell'>('stats');
   
-  // Historical Chart States
   const [viewMode, setViewMode] = useState<'live' | 'historical'>('live');
-  const [historicalData, setHistoricalData] = useState<{time: number, price: number}[]>([]);
-  const [lastUpdated, setLastUpdated] = useState<string>("");
-  const [isHistLoading, setIsHistLoading] = useState(false);
-  const [hoveredData, setHoveredData] = useState<{ x: number, y: number, price: number, time: number } | null>(null);
 
   const ws = useRef<WebSocket | null>(null);
 
-  // 1. Fetch real-time exchange rate
-  useEffect(() => {
-    const fetchRate = async () => {
-      try {
-        const res = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/home/crypto/exchange-rate`);
-        if (res.ok) {
-          const rate = await res.json();
-          setInrRate(rate);
-        }
-      } catch (err) {
-        console.error("Failed to fetch exchange rate:", err);
-        setInrRate(92.50); 
-      }
-    };
-    fetchRate();
-  }, []);
+  // 1. Fetch real-time exchange rate with React Query
+  const { data: inrRate = 92.5, isLoading: isRateLoading } = useQuery({
+    queryKey: ['exchangeRate'],
+    queryFn: async () => {
+      const res = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/home/crypto/exchange-rate`);
+      if (!res.ok) return 92.5;
+      return res.json();
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
 
-  // 2. Fetch Historical Data
-  useEffect(() => {
-    if (!id) return;
-    const fetchHistorical = async () => {
+  // 2. Fetch Historical Data with React Query
+  const { data: histQueryResult, isLoading: isHistLoading } = useQuery({
+    queryKey: ['historicalData', id],
+    queryFn: async () => {
+      if (!id) return null;
+      const activeSymbol = symbol || id;
+      const binanceSymbol = activeSymbol.toUpperCase().endsWith("USDT")
+          ? activeSymbol.toUpperCase()
+          : `${activeSymbol.toUpperCase()}USDT`;
 
-      setIsHistLoading(true);
-      try {
-        const activeSymbol =
-                    symbol || id;
+      const res = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/home/crypto/historical-data?symbol=${binanceSymbol}&interval=15m&limit=96`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!id,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
 
-        const binanceSymbol =
-                    activeSymbol
-                        .toUpperCase()
-                        .endsWith("USDT")
+  const historicalData = React.useMemo(() => {
+    const data = histQueryResult?.tickerData;
+    if (data && Array.isArray(data)) {
+      return data.map((kline: any[]) => ({
+        time: kline[0],
+        price: parseFloat(kline[4]) * (inrRate || 1)
+      }));
+    }
+    return [];
+  }, [histQueryResult, inrRate]);
 
-                        ? activeSymbol.toUpperCase()
-
-                        : `${activeSymbol.toUpperCase()}USDT`;
-
-        const res = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/home/crypto/historical-data?symbol=${binanceSymbol}&interval=15m&limit=96`);
-        if (res.ok) {
-          const result = await res.json();
-          // result.tickerData is directly array of klines
-          const data = result?.tickerData;
-
-          if (data && Array.isArray(data)) {
-            const mapped = data.map((kline: any[]) => ({
-              time: kline[0], // candle open time
-              // close price
-              price: parseFloat(kline[4]) * (inrRate || 1)
-            }));
-            setHistoricalData(mapped);
-          }
-
-          if (result?.timestamp) {
-            setLastUpdated(result.timestamp);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to fetch historical data:", err);
-      } finally {
-        setIsHistLoading(false);
-      }
-    };
-    fetchHistorical();
-  }, [id, symbol, inrRate]);
+  const lastUpdated = histQueryResult?.timestamp || "";
 
   // 3. WebSocket Connection
   useEffect(() => {
     const activeSymbol = symbol || id;
-    if (!activeSymbol || inrRate === null) return;
+    if (!activeSymbol || isRateLoading) return;
 
-    // Our new homepage passes "BTCUSDT" directly, prevent "btcusdtusdt"
     const lowerSymbol = activeSymbol.toLowerCase();
     const binanceSymbol = lowerSymbol.endsWith('usdt') ? lowerSymbol : `${lowerSymbol}usdt`;
     const socketUrl = `${import.meta.env.VITE_WEBSOCKET_URL}/ws/crypto/${binanceSymbol}`;
@@ -159,41 +132,35 @@ const CoinDetail: React.FC = () => {
     return () => {
       if (ws.current) ws.current.close();
     };
-  }, [symbol, id, inrRate]);
+  }, [symbol, id, inrRate, isRateLoading]);
+
+  const isPositive = ticker ? parseFloat(ticker.P) >= 0 : true;
+
+  // Prepare chart data based on view mode
+  const chartData = React.useMemo(() => {
+    if (viewMode === 'live') {
+      const now = Date.now();
+      return priceHistory.map((price, idx) => ({
+        // synthesize a time for live updates (1 second apart for visualization)
+        time: now - ((priceHistory.length - 1 - idx) * 1000), 
+        value: price
+      }));
+    } else {
+      return historicalData.map(d => ({
+        time: d.time,
+        value: d.price
+      }));
+    }
+  }, [viewMode, priceHistory, historicalData]);
 
   if (!ticker && !isConnected && !historicalData.length) {
     return (
       <div className="detail-loader">
         <Activity className="animate-pulse" size={48} />
-        <p>{inrRate === null ? 'Syncing Live Exchange Rates...' : 'Connecting to Markets...'}</p>
+        <p>{isRateLoading ? 'Syncing Live Exchange Rates...' : 'Connecting to Markets...'}</p>
       </div>
     );
   }
-
-  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (viewMode === 'live' || historicalData.length === 0) return;
-    const svg = e.currentTarget;
-    const rect = svg.getBoundingClientRect();
-    const mouseX = ((e.clientX - rect.left) / rect.width) * 450;
-    const boundedX = Math.min(Math.max(mouseX, 0), 415);
-    
-    const idx = Math.round((boundedX / 415) * (historicalData.length - 1));
-    const point = historicalData[idx];
-
-    if (point) {
-      const prices = historicalData.map(d => d.price);
-      const min = Math.min(...prices);
-      const max = Math.max(...prices);
-      const range = max - min || 1;
-      const x = (idx / (historicalData.length - 1)) * 415;
-      const y = 200 - ((point.price - min) / range) * 180;
-      setHoveredData({ x, y, price: point.price, time: point.time });
-    }
-  };
-
-  const handleMouseLeave = () => setHoveredData(null);
-
-  const isPositive = ticker ? parseFloat(ticker.P) >= 0 : true;
 
   return (
     <div className="coin-detail-wrapper">
@@ -279,151 +246,8 @@ const CoinDetail: React.FC = () => {
             
             <div className="chart-wrapper">
               {(viewMode === 'live' ? priceHistory.length > 1 : historicalData.length > 0) ? (
-                <div className="svg-container">
-                  <svg 
-                  viewBox="0 0 450 240" 
-                  preserveAspectRatio="none" 
-                  className="sparkline-svg"
-                  onMouseMove={handleMouseMove}
-                  onMouseLeave={handleMouseLeave}
-                >
-                    <defs>
-                      <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={isPositive ? "#00ff88" : "#ff4d4d"} stopOpacity="0.2" />
-                        <stop offset="100%" stopColor={isPositive ? "#00ff88" : "#ff4d4d"} stopOpacity="0" />
-                      </linearGradient>
-                    </defs>
-                    
-                    {/* Grid Lines & Y-Axis Labels */}
-                    {(() => {
-                      const dataPoints = viewMode === 'live' 
-                        ? priceHistory.map((p, i) => ({ price: p, time: i })) 
-                        : historicalData;
-                      const prices = dataPoints.map(d => d.price).filter(p => !isNaN(p));
-                      if (prices.length === 0) return null;
-                      const min = Math.min(...prices);
-                      const max = Math.max(...prices);
-                      const range = max - min || 1;
-                      const steps = 4;
-                      
-                      const formatSmart = (val: number) => {
-                        if (val >= 1000000) return (val / 1000000).toFixed(2) + 'M';
-                        if (val >= 1000) return (val / 1000).toFixed(1) + 'K';
-                        return val.toFixed(2);
-                      };
-
-                      return Array.from({ length: steps + 1 }).map((_, i) => {
-                        const val = max - (i * range / steps);
-                        const y = 20 + (i * 180 / steps);
-                        return (
-                          <React.Fragment key={`y-${i}`}>
-                            <line x1="0" y1={y} x2="415" y2={y} stroke="rgba(255, 255, 255, 0.05)" />
-                            <text x="418" y={y + 4} fill="#848e9c" fontSize="10">{formatSmart(val)}</text>
-                          </React.Fragment>
-                        );
-                      });
-                    })()}
-
-                    {/* Chart Paths */}
-                    {(() => {
-                      const dataPoints = viewMode === 'live' 
-                        ? priceHistory.map((p, i) => ({ price: p, time: i })) 
-                        : historicalData;
-                      const validPoints = dataPoints.filter(d => !isNaN(d.price));
-                      if (validPoints.length === 0) return null;
-
-                      const prices = validPoints.map(d => d.price);
-                      const min = Math.min(...prices);
-                      const max = Math.max(...prices);
-                      const range = max - min || 1;
-                      
-                      const points = validPoints.map((d, i) => {
-                        const x = (i / (validPoints.length - 1)) * 415;
-                        const y = 200 - ((d.price - min) / range) * 180;
-                        return { x, y };
-                      });
-
-                      const pathData = points.map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(' ');
-                      const areaData = `${pathData} L 415 200 L 0 200 Z`;
-
-                      return (
-                        <>
-                          <path d={areaData} fill="url(#chartGradient)" />
-                          <path d={pathData} fill="none" stroke={isPositive ? "#00ff88" : "#ff4d4d"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                          
-                          {/* Hover Tooltip Elements */}
-                          {hoveredData && (
-                            <>
-                              <line 
-                                x1={hoveredData.x} y1="20" 
-                                x2={hoveredData.x} y2="200" 
-                                stroke="rgba(255, 255, 255, 0.2)" 
-                                strokeWidth="1" 
-                                strokeDasharray="4 4" 
-                              />
-                              <circle 
-                                cx={hoveredData.x} cy={hoveredData.y} 
-                                r="4" 
-                                fill={isPositive ? "#00ff88" : "#ff4d4d"} 
-                                stroke="#121212" 
-                                strokeWidth="2" 
-                              />
-                              
-                              {/* Tooltip Box */}
-                              <g>
-                                <rect 
-                                  x={Math.min(hoveredData.x + 10, 290)} 
-                                  y={hoveredData.y - 45} 
-                                  width="100" height="42" 
-                                  rx="8" 
-                                  fill="rgba(15, 15, 26, 0.98)" 
-                                  stroke="rgba(99, 102, 241, 0.3)"
-                                  strokeWidth="1"
-                                />
-                                <text 
-                                  x={Math.min(hoveredData.x + 20, 300)} 
-                                  y={hoveredData.y - 27} 
-                                  fill="#ffffff" 
-                                  fontSize="12" 
-                                  fontWeight="700"
-                                  fontFamily="Outfit, sans-serif"
-                                >
-                                  ₹{hoveredData.price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                                </text>
-                                <text 
-                                  x={Math.min(hoveredData.x + 20, 300)} 
-                                  y={hoveredData.y - 10} 
-                                  fill="rgba(255, 255, 255, 0.5)" 
-                                  fontSize="10"
-                                  fontWeight="500"
-                                  fontFamily="Outfit, sans-serif"
-                                >
-                                  {`${new Date(hoveredData.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (${new Date(hoveredData.time).toLocaleDateString([], { month: 'short', day: 'numeric' })})`}
-                                </text>
-                              </g>
-                            </>
-                          )}
-                        </>
-                      );
-                    })()}
-                    {/* X-Axis Labels (Time) */}
-                    {viewMode === 'historical' && historicalData.length > 0 && (() => {
-                      const indices = [0, Math.floor(historicalData.length / 4), Math.floor(historicalData.length / 2), Math.floor(historicalData.length * 3 / 4), historicalData.length - 1];
-                      return indices.map((idx, i) => {
-                        const d = historicalData[idx];
-                        const x = (idx / (historicalData.length - 1)) * 415;
-                        const timeStr = new Date(d.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                        return (
-                          <React.Fragment key={`x-${i}`}>
-                            <line x1={x} y1="200" x2={x} y2="205" stroke="rgba(255, 255, 255, 0.1)" />
-                            <text x={x} y="220" fill="#848e9c" fontSize="10" textAnchor={i === 0 ? "start" : i === 4 ? "end" : "middle"}>
-                              {timeStr}
-                            </text>
-                          </React.Fragment>
-                        );
-                      });
-                    })()}
-                  </svg>
+                <div style={{ width: '100%', height: '240px' }}>
+                  <CryptoChart data={chartData} isPositive={isPositive} />
                 </div>
               ) : (
                 <div className="chart-placeholder">

@@ -10,12 +10,15 @@
     "preview": "vite preview --port 4174"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.101.0",
     "axios": "^1.13.6",
     "framer-motion": "^12.38.0",
+    "lightweight-charts": "^5.2.0",
     "lucide-react": "^0.575.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-hook-form": "^7.71.2",
+    "react-hot-toast": "^2.6.0",
     "react-router-dom": "^7.13.0"
   },
   "devDependencies": {

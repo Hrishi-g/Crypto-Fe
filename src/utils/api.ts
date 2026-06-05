@@ -1,4 +1,4 @@
-import { getCsrfHeaders } from './csrf';
+import { getCsrfToken } from './csrf';
 
 let isRefreshing = false;
 let refreshSubscribers: ((token: boolean) => void)[] = [];
@@ -45,7 +45,14 @@ export async function apiFetch(url: string, options: RequestInit = {}): Promise<
   
   let token = null;
   if (needsCsrf) {
-    token = await fetchCsrfToken();
+    // 1. Try reading directly from the browser's current cookie to get the freshest token
+    // This is vital because the backend rotates the CSRF token on login/logout
+    token = getCsrfToken();
+    
+    // 2. Fallback to the fetched/cached token if cookie is inaccessible (e.g. strict cross-origin)
+    if (!token) {
+      token = await fetchCsrfToken();
+    }
   }
 
   // Ensure credentials are sent by default for session management

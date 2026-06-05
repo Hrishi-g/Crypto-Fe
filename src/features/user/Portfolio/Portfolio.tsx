@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Wallet, TrendingUp, PieChart, History } from 'lucide-react';
 import { apiFetch } from '../../../utils/api';
+import CryptoIcon from '../../../components/CryptoIcon/CryptoIcon';
 
 import './Portfolio.css';
 
@@ -11,40 +13,30 @@ interface PortfolioItem {
   avgBuyPrice: number;
 }
 
+
+
 const Portfolio: React.FC = () => {
   const { user, isAuth } = useOutletContext<{ user: any, isAuth: boolean }>();
   const navigate = useNavigate();
-  const [portfolioData, setPortfolioData] = useState<PortfolioItem | PortfolioItem[] | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   useEffect(() => {
     if (!isAuth && !user) {
       navigate('/login');
-      return;
     }
-    
-    if (isAuth && !user) return;
+  }, [isAuth, user, navigate]);
 
-    const fetchPortfolio = async () => {
-      try {
-        const response = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/portfolio/get`);
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch portfolio data');
-        }
-
-        const data = await response.json();
-        setPortfolioData(data);
-      } catch (err: any) {
-        setError(err.message || 'An error occurred');
-      } finally {
-        setLoading(false);
+  const { data: portfolioData, isLoading: loading, error: queryError } = useQuery({
+    queryKey: ['portfolio', user?.id],
+    queryFn: async () => {
+      const response = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/portfolio/get`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch portfolio data');
       }
-    };
+      return response.json();
+    },
+    enabled: !!user && isAuth,
+  });
 
-    fetchPortfolio();
-  }, [user, isAuth, navigate]);
+  const error = queryError ? queryError.message : null;
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -125,9 +117,9 @@ const Portfolio: React.FC = () => {
         ) : (
            <div className="asset-grid">
              {items.map((item, idx) => (
-               <div key={idx} className="asset-card">
+               <div key={idx} className="glass-card asset-card">
                  <div className="asset-info">
-                   <div className="asset-icon">{item.asset?.substring(0, 3) || 'Crypto'}</div>
+                  <CryptoIcon symbol={item.asset || 'Crypto'} />
                    <div className="asset-details">
                      <h3>{item.asset}</h3>
                      <span className="asset-quantity">{item.quantity} units</span>

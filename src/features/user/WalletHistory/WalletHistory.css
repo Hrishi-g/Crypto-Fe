@@ -131,7 +131,7 @@
 .empty-state {
   text-align: center;
   padding: 4rem 1rem;
-  color: black
+  color: var(--text-secondary);
 }
 
 /* Loading state */

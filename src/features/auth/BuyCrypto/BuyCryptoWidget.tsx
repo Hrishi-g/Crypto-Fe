@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Wallet, ShieldCheck, AlertCircle } from 'lucide-react';
 import { getCsrfHeaders } from '../../../utils/csrf';
 import { apiFetch } from '../../../utils/api';
+import toast from 'react-hot-toast';
 import './BuyCryptoWidget.css';
 
 interface BinanceTicker {
@@ -29,42 +32,44 @@ interface BuyCryptoWidgetProps {
 
 const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, name, user, ticker, tradeType = 'BUY', onCancel }) => {
   const navigate = useNavigate();
-  const [balance, setBalance] = useState<number>(0);
   const [selectedHolding, setSelectedHolding] = useState<PortfolioItem | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [amount, setAmount] = useState<string>(''); // Quantity for sell, INR for buy
+  const [amount, setAmount] = useState<string>(''); // Always INR amount for both Buy and Sell
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const queryClient = useQueryClient();
+
+  const { data: userProfile } = useQuery({
+    queryKey: ['userProfile', user?.id],
+    queryFn: async () => {
+      const res = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/user/profile`, { credentials: 'include' });
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!user,
+  });
+
+  const { data: portfolioItems = [] } = useQuery({
+    queryKey: ['portfolio', user?.id],
+    queryFn: async () => {
+      const res = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/portfolio/get`, { credentials: 'include' });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [data];
+    },
+    enabled: !!user,
+  });
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const [profileRes, portfolioRes] = await Promise.all([
-          apiFetch(`${import.meta.env.VITE_BACKEND_URL}/user/profile`, { credentials: 'include' }),
-          apiFetch(`${import.meta.env.VITE_BACKEND_URL}/portfolio/get`, { credentials: 'include' })
-        ]);
-        
-        if (profileRes.ok) {
-          const data = await profileRes.json();
-          setBalance(Number(data.totalAmount || 0));
-        }
-
-        if (portfolioRes.ok) {
-          const data = await portfolioRes.json();
-          const items = Array.isArray(data) ? data : [data];
-          const currentAsset = id?.toUpperCase();
-          const holding = items.find((h: PortfolioItem) => h.asset === currentAsset);
-          setSelectedHolding(holding || null);
-        }
-      } catch (e) {
-        console.error("Failed to fetch user trade context", e);
-      }
-    };
-    if (user) {
-      fetchUserProfile();
+    if (portfolioItems.length > 0 && id) {
+      const currentAsset = id.toUpperCase();
+      const holding = portfolioItems.find((h: PortfolioItem) => h.asset === currentAsset);
+      setSelectedHolding(holding || null);
     }
-  }, [user, id]);
+  }, [portfolioItems, id]);
+
+  const balance = Number(userProfile?.totalAmount || 0);
 
   // IMPORTANT: ticker.c passed from CoinDetail is ALREADY converted to INR
   const currentPriceInr = ticker ? parseFloat(ticker.c) : 0;
@@ -72,19 +77,18 @@ const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, name, user, ticke
   const isSell = tradeType === 'SELL';
   const numericAmount = parseFloat(amount) || 0;
   
-  const cryptoQuantity = !isSell 
-    ? (numericAmount && currentPriceInr > 0 ? (numericAmount / currentPriceInr).toFixed(10) : '0')
-    : amount || '0';
+  const cryptoQuantity = (numericAmount && currentPriceInr > 0) ? (numericAmount / currentPriceInr).toFixed(8) : '0';
 
   const isInsufficientBalance = !isSell && numericAmount > balance;
-  const isInsufficientQuantity = isSell && numericAmount > Number(selectedHolding?.quantity || 0);
-  const isBelowMinimum = !isSell && numericAmount > 0 && numericAmount < 100;
+  const isInsufficientQuantity = isSell && Number(cryptoQuantity) > Number(selectedHolding?.quantity || 0);
+  const isBelowMinimum = numericAmount > 0 && numericAmount < 100;
 
   const handleMax = () => {
     if (!isSell) {
       setAmount(Number(balance).toString());
     } else {
-      setAmount(String(selectedHolding?.quantity || 0));
+      const maxInr = Number(selectedHolding?.quantity || 0) * currentPriceInr;
+      setAmount(maxInr.toString());
     }
   };
 
@@ -92,8 +96,8 @@ const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, name, user, ticke
     setIsProcessing(true);
     setErrorMessage(null);
     try {
-      const tradeAmount = !isSell ? numericAmount : (numericAmount * currentPriceInr);
-      const tradeQty = !isSell ? parseFloat(cryptoQuantity) : numericAmount;
+      const tradeAmount = numericAmount;
+      const tradeQty = parseFloat(cryptoQuantity);
 
       const response = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/trade/buy-sell`, {
         method: 'POST',
@@ -123,8 +127,8 @@ const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, name, user, ticke
 
       const responseText = await response.text();
       setSuccessMessage(responseText);
-      const tradeAmount1 = !isSell ? numericAmount : (numericAmount * currentPriceInr);
-      setBalance(prev => Number(prev) + (isSell ? tradeAmount : -tradeAmount1));
+      queryClient.invalidateQueries({ queryKey: ['userProfile', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['portfolio', user?.id] });
       setAmount('');
       setTimeout(() => {
         setSuccessMessage(null);
@@ -141,8 +145,18 @@ const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, name, user, ticke
   };
 
   const handleProceed = () => {
-    if (!isSell && numericAmount < 100) return;
-    if (isSell && numericAmount <= 0) return;
+    if (!userProfile?.firstName || !userProfile?.lastName || (!userProfile?.hasDob && !userProfile?.dob)) {
+      toast.error('Please complete your profile details to perform trades.', {
+        style: {
+          borderRadius: '10px',
+          background: '#333',
+          color: '#fff',
+        },
+      });
+      navigate('/profile');
+      return;
+    }
+    if (numericAmount < 100) return;
     if (isInsufficientBalance || isInsufficientQuantity) return;
     setShowConfirmModal(true);
   };
@@ -150,7 +164,7 @@ const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, name, user, ticke
   const coinName = name || (id ? id.charAt(0).toUpperCase() + id.slice(1) : 'Coin');
 
   return (
-    <div className="buy-widget-container">
+    <div className="glass-card buy-widget-container">
       <div className="buy-widget-header">
         <h4>{isSell ? 'Sell' : 'Buy'} {coinName} instantly</h4>
         <button className="widget-close-btn" onClick={onCancel}>&times;</button>
@@ -186,24 +200,22 @@ const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, name, user, ticke
 
         <div className="buy-widget-input-group">
           <div className="buy-widget-labels">
-            <span>{isSell ? `Quantity to Sell (${id?.toUpperCase()})` : 'Amount to Spend (INR)'}</span>
+            <span>Amount to {isSell ? 'Receive' : 'Spend'} (INR)</span>
             <span className="buy-widget-qty-preview">
-                {isSell 
-                    ? (currentPriceInr > 0 ? `≈ ₹${(numericAmount * currentPriceInr).toLocaleString('en-IN', { maximumFractionDigits: 2 })}` : '≈ ₹---')
-                    : (currentPriceInr > 0 ? `≈ ${parseFloat(cryptoQuantity).toFixed(6)} ${id?.toUpperCase()}` : `≈ --- ${id?.toUpperCase()}`)}
+                {currentPriceInr > 0 ? `≈ ${parseFloat(cryptoQuantity).toFixed(6)} ${id?.toUpperCase()}` : `≈ --- ${id?.toUpperCase()}`}
             </span>
           </div>
           
           <div className={`buy-widget-input-wrapper ${(isInsufficientBalance || isInsufficientQuantity) ? 'error-state' : ''}`}>
-            <span className="buy-widget-currency">{isSell ? '🔗' : '₹'}</span>
+            <span className="buy-widget-currency">₹</span>
             <input 
               type="number" 
-              placeholder={isSell ? "0.0000" : "0.00"} 
+              placeholder="0.00" 
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               className="buy-widget-input"
               min="0"
-              step={isSell ? "0.0001" : "1"}
+              step="1"
             />
           </div>
         </div>
@@ -241,14 +253,14 @@ const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, name, user, ticke
                 >
                   {isSell ? 'Sell All' : 'Use Max'}
                 </button>
-                {!isSell && (
+                {/* Min/Max info string removed for simplicity since both use INR now */}
                   <button 
                     className="widget-btn-add" 
                     onClick={() => navigate(`/profile`)}
                   >
                     Add Money
                   </button>
-                )}
+
               </div>
             </div>
           ) : (
@@ -266,7 +278,7 @@ const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, name, user, ticke
               <button 
                 className={`widget-btn-proceed ${isSell ? 'sell-mode' : ''}`} 
                 onClick={handleProceed}
-                disabled={(isSell ? numericAmount <= 0 : numericAmount < 100) || isProcessing}
+                disabled={(numericAmount < 100) || isProcessing}
                 style={{ background: isSell ? '#f44336' : '' }}
               >
                 {isProcessing ? 'Processing...' : `Proceed to ${isSell ? 'Sell' : 'Buy'}`}
@@ -276,9 +288,9 @@ const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, name, user, ticke
         </div>
       </div>
 
-      {showConfirmModal && (
+      {showConfirmModal && createPortal(
         <div className="modal-overlay" onClick={() => setShowConfirmModal(false)}>
-          <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="glass-card confirm-modal" onClick={(e) => e.stopPropagation()}>
             <h3 className="confirm-modal-title">Confirm {tradeType === 'BUY' ? 'Purchase' : 'Sale'}</h3>
             <div className="confirm-modal-details">
               <div className="confirm-detail-row">
@@ -330,7 +342,8 @@ const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, name, user, ticke
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

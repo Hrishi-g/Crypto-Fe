@@ -209,7 +209,7 @@ const WalletHistory: React.FC = () => {
           <p>Your transactions will appear here.</p>
         </div>
       ) : (
-        <div className="transaction-list">
+        <div className="glass-card transaction-list" style={{ padding: '0 1.5rem', marginBottom: '2rem' }}>
           {transactions.map((tx, index) => {
             const { title, Icon, isPositive, status } = getTxDetails(tx);
             return (

@@ -1,8 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Wallet, TrendingUp, TrendingDown, Info, ShieldCheck, AlertCircle, Activity } from 'lucide-react';
 import { getCsrfHeaders } from '../../../utils/csrf';
 import { apiFetch } from '../../../utils/api';
+import CryptoIcon from '../../../components/CryptoIcon/CryptoIcon';
+import toast from 'react-hot-toast';
 import './BuyCrypto.css';
 
 interface BinanceTicker {
@@ -26,9 +30,6 @@ const BuyCrypto: React.FC = () => {
   const { user, setUser } = useOutletContext<{ user: any, setUser: (user: any) => void }>();
 
   const [ticker, setTicker] = useState<BinanceTicker | null>(null);
-  const [inrRate, setInrRate] = useState<number | null>(null);
-  const [balance, setBalance] = useState<number>(0);
-  const [holdings, setHoldings] = useState<PortfolioItem[]>([]);
   const [selectedHolding, setSelectedHolding] = useState<PortfolioItem | null>(null);
   const [tradeType, setTradeType] = useState<'BUY' | 'SELL'>('BUY');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -39,22 +40,17 @@ const BuyCrypto: React.FC = () => {
 
   const ws = useRef<WebSocket | null>(null);
 
-  // Fetch exchange rate
-  useEffect(() => {
-    const fetchRate = async () => {
-      try {
-        const res = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/home/crypto/exchange-rate`);
-        if (res.ok) {
-          const rate = await res.json();
-          setInrRate(rate);
-        }
-      } catch (err) {
-        console.error("Failed to fetch exchange rate:", err);
-        setInrRate(92.50); 
-      }
-    };
-    fetchRate();
-  }, []);
+  const queryClient = useQueryClient();
+
+  const { data: inrRate = 92.5 } = useQuery({
+    queryKey: ['exchangeRate'],
+    queryFn: async () => {
+      const res = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/home/crypto/exchange-rate`);
+      if (!res.ok) return 92.5;
+      return res.json();
+    },
+    staleTime: 1000 * 60 * 5,
+  });
 
   // Fetch live price via WebSocket
   useEffect(() => {
@@ -81,46 +77,38 @@ const BuyCrypto: React.FC = () => {
     };
   }, [symbol, inrRate]);
 
-  // Fetch Portfolio
-  useEffect(() => {
-    const fetchPortfolio = async () => {
-      try {
-        const res = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/portfolio/get`);
-        if (res.ok) {
-          const data = await res.json();
-          const items = Array.isArray(data) ? data : [data];
-          setHoldings(items);
-          
-          const currentAsset = id?.toUpperCase();
-          const holding = items.find((h: PortfolioItem) => h.asset === currentAsset);
-          setSelectedHolding(holding || null);
-        }
-      } catch (e) {
-        console.error("Failed to fetch portfolio", e);
-      }
-    };
-    if (user) {
-      fetchPortfolio();
-    }
-  }, [user, id]);
 
-  // Fetch user balance
+
+  const { data: holdings = [] } = useQuery({
+    queryKey: ['portfolio', user?.id],
+    queryFn: async () => {
+      const res = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/portfolio/get`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [data];
+    },
+    enabled: !!user,
+  });
+
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const res = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/user/profile`);
-        if (res.ok) {
-          const data = await res.json();
-          setBalance(data.totalAmount || 0);
-        }
-      } catch (e) {
-        console.error("Failed to fetch user profile", e);
-      }
-    };
-    if (user) {
-      fetchUserProfile();
+    if (holdings.length > 0 && id) {
+      const currentAsset = id.toUpperCase();
+      const holding = holdings.find((h: PortfolioItem) => h.asset === currentAsset);
+      setSelectedHolding(holding || null);
     }
-  }, [user]);
+  }, [holdings, id]);
+
+  const { data: userProfile } = useQuery({
+    queryKey: ['userProfile', user?.id],
+    queryFn: async () => {
+      const res = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/user/profile`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!user,
+  });
+
+  const balance = userProfile?.totalAmount || 0;
 
   const currentPriceUsd = ticker ? parseFloat(ticker.c) : 0;
   const currentPriceInr = currentPriceUsd * (inrRate || 92.5);
@@ -128,23 +116,24 @@ const BuyCrypto: React.FC = () => {
   const priceChangePercent = ticker ? ((parseFloat(ticker.c) - parseFloat(ticker.o)) / parseFloat(ticker.o) * 100).toFixed(2) : '0.00';
   const isTrendUp = parseFloat(priceChangePercent) >= 0;
 
-  const cryptoQuantity = tradeType === 'BUY' 
-    ? (amount && currentPriceInr > 0 ? (parseFloat(amount) / currentPriceInr).toFixed(10) : '0')
-    : amount || '0';
-
   const numericAmount = parseFloat(amount) || 0;
+  const cryptoQuantity = (numericAmount / (currentPriceInr || 1)).toFixed(8);
   
   // Validation
   const isInsufficientFunds = tradeType === 'BUY' && numericAmount > balance;
-  const isInsufficientQuantity = tradeType === 'SELL' && numericAmount > (selectedHolding?.quantity || 0);
-  const isBelowMinimum = tradeType === 'BUY' && numericAmount > 0 && numericAmount < 100;
-  const isSellMinValid = tradeType === 'SELL' && numericAmount > 0;
+  const isInsufficientQuantity = tradeType === 'SELL' && Number(cryptoQuantity) > (selectedHolding?.quantity || 0);
+  const isBuyMinValid = tradeType === 'BUY' && numericAmount >= 100;
+  const isSellMinValid = tradeType === 'SELL' && numericAmount >= 100;
+  const isBelowMinimum = numericAmount > 0 && numericAmount < 100;
 
   const handleMax = () => {
     if (tradeType === 'BUY') {
       setAmount(balance.toString());
+    } else if (tradeType === 'SELL' && selectedHolding) {
+      const maxInr = Number(selectedHolding.quantity) * currentPriceInr;
+      setAmount(maxInr.toString());
     } else {
-      setAmount(selectedHolding?.quantity.toString() || '0');
+      setAmount('0');
     }
   };
 
@@ -152,8 +141,8 @@ const BuyCrypto: React.FC = () => {
     setIsProcessing(true);
     setErrorMessage(null);
     try {
-      const tradeAmount = tradeType === 'BUY' ? numericAmount : (numericAmount * currentPriceInr);
-      const tradeQty = tradeType === 'BUY' ? parseFloat(cryptoQuantity) : numericAmount;
+      const tradeAmount = numericAmount;
+      const tradeQty = parseFloat(cryptoQuantity);
 
       const response = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/trade/buy-sell`, {
         method: 'POST',
@@ -184,7 +173,8 @@ const BuyCrypto: React.FC = () => {
       setSuccessMessage(responseText);
       
       const newBal = tradeType === 'BUY' ? balance - tradeAmount : balance + tradeAmount;
-      setBalance(newBal);
+      queryClient.invalidateQueries({ queryKey: ['userProfile', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['portfolio', user?.id] });
       if (setUser) {
         setUser((prev: any) => prev ? { ...prev, totalAmount: newBal } : null);
       }
@@ -205,8 +195,20 @@ const BuyCrypto: React.FC = () => {
   };
 
   const handleProceed = () => {
-    if (tradeType === 'BUY' && (numericAmount < 100 || numericAmount > balance)) return;
-    if (tradeType === 'SELL' && (numericAmount <= 0 || numericAmount > (selectedHolding?.quantity || 0))) return;
+    if (!userProfile?.firstName || !userProfile?.lastName || (!userProfile?.hasDob && !userProfile?.dob)) {
+      toast.error('Please complete your profile details to perform trades.', {
+        style: {
+          borderRadius: '10px',
+          background: '#333',
+          color: '#fff',
+        },
+      });
+      navigate('/profile');
+      return;
+    }
+    if (tradeType === 'BUY' && numericAmount < 100) return;
+    if (tradeType === 'SELL' && numericAmount < 100) return;
+    if (tradeType === 'SELL' && Number(cryptoQuantity) > (selectedHolding?.quantity || 0)) return;
     setShowConfirmModal(true);
   };
 
@@ -222,7 +224,8 @@ const BuyCrypto: React.FC = () => {
         </nav>
 
         <header className="buy-price-header-area">
-          <div className="buy-coin-tagline">
+          <div className="buy-coin-tagline" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <CryptoIcon symbol={id || 'btc'} size={40} />
             <span className="buy-symbol-badge-pnl">{id?.toUpperCase()} / INR</span>
           </div>
           <h1 className="buy-name-large-display">{coinName} Price</h1>
@@ -249,7 +252,6 @@ const BuyCrypto: React.FC = () => {
         </header>
 
         <div className="buy-action-panel-card">
-          {/* Trade Type Toggle */}
           <div className="trade-type-tabs" style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', padding: '4px', marginBottom: '1.5rem' }}>
             <button 
               className={`trade-tab ${tradeType === 'BUY' ? 'active' : ''}`}
@@ -267,7 +269,6 @@ const BuyCrypto: React.FC = () => {
             </button>
           </div>
 
-          {/* Holding Info Section - Styled like Portfolio Card */}
           {selectedHolding && (
             <div className="buy-holding-info" style={{ marginBottom: '1.5rem', padding: '1rem', background: 'rgba(189, 52, 254, 0.05)', borderRadius: '16px', border: '1px solid rgba(189, 52, 254, 0.1)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
@@ -292,24 +293,22 @@ const BuyCrypto: React.FC = () => {
           )}
           <div className="buy-input-section-block">
             <div className="buy-input-labels">
-              <span>{tradeType === 'BUY' ? 'Amount to Spend (INR)' : `Quantity to Sell (${id?.toUpperCase()})`}</span>
+              <span>Amount to {tradeType === 'BUY' ? 'Spend' : 'Receive'} (INR)</span>
               <span className="buy-qty-preview">
-                {tradeType === 'BUY' 
-                  ? `≈ ${parseFloat(cryptoQuantity).toFixed(6)} ${id?.toUpperCase()}` 
-                  : `≈ ₹${(numericAmount * currentPriceInr).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`}
+                {`≈ ${cryptoQuantity} ${id?.toUpperCase()}`}
               </span>
             </div>
             
             <div className={`buy-input-element-wrap ${(isInsufficientFunds || isInsufficientQuantity) ? 'error-border' : ''}`}>
-              <span className="input-rupee-sign">{tradeType === 'BUY' ? '₹' : <Activity size={18} />}</span>
+              <span className="currency-prefix">₹</span>
               <input 
                 type="number" 
-                placeholder={tradeType === 'BUY' ? "0.00" : "0.000000"} 
+                placeholder="0.00" 
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className="buy-inr-numeric-input"
                 min="0"
-                step={tradeType === 'BUY' ? "1" : "0.0001"}
+                step="1"
               />
             </div>
           </div>
@@ -372,7 +371,7 @@ const BuyCrypto: React.FC = () => {
               <button 
                 className={`execute-buy-proceed-btn ${tradeType === 'SELL' ? 'sell-btn' : ''}`} 
                 onClick={handleProceed}
-                disabled={(tradeType === 'BUY' && numericAmount < 100) || (tradeType === 'SELL' && numericAmount <= 0) || isProcessing}
+                disabled={numericAmount < 100 || isProcessing}
                 style={{ background: tradeType === 'SELL' ? '#f44336' : '#bd34fe' }}
               >
                 {isProcessing ? 'Processing Transaction...' : `Proceed to ${tradeType === 'BUY' ? 'Buy' : 'Sell'} ${coinName}`}
@@ -387,7 +386,7 @@ const BuyCrypto: React.FC = () => {
         </div>
       </div>
 
-      {showConfirmModal && (
+      {showConfirmModal && createPortal(
         <div className="modal-overlay" onClick={() => setShowConfirmModal(false)}>
           <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
             <h3 className="confirm-modal-title">Confirm {tradeType === 'BUY' ? 'Purchase' : 'Sale'}</h3>
@@ -441,7 +440,8 @@ const BuyCrypto: React.FC = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

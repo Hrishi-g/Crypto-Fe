@@ -15,6 +15,7 @@ import WalletHistory from './features/user/WalletHistory/WalletHistory';
 import SetPasswordModal from './features/auth/SetPassword/SetPasswordModal';
 import ResetPassword from './features/auth/ResetPassword/ResetPassword';
 import OAuth2RedirectHandler from './features/auth/OAuth2RedirectHandler/OAuth2RedirectHandler';
+import { Toaster } from 'react-hot-toast';
 
 const AppLayout = () => {
   const [user, setUser] = useState<any>(null);
@@ -102,6 +103,7 @@ const AppLayout = () => {
           }}
         />
       )}
+      <Toaster position="top-right" />
     </div>
   );
 };

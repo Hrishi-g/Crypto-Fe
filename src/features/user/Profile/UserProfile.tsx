@@ -163,12 +163,12 @@ const UserProfile: React.FC = () => {
   return (
     <div className="user-profile-container">
       {user?.hasPassword === false && (
-        <div className='user-profile-change-password-btn-prompt'>
+        <div className='glass-card user-profile-change-password-btn-prompt' style={{ borderRadius: '25px' }}>
           <span>Want to set your password now? </span>
           <button onClick={() => setShowPasswordModal(true)} className="manage-btn">Set Password</button>
         </div>
       )}
-      <div className="user-profile-card">
+      <div className="glass-card user-profile-card" style={{ borderRadius: '32px' }}>
         {showWallet ? (
           <div className="wallet-manager-container">
              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
