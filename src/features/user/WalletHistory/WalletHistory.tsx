@@ -116,7 +116,7 @@ const WalletHistory: React.FC = () => {
         setHasMore(newTransactions.length === PAGE_SIZE);
       }
     } catch (err: any) {
-      console.error(err);
+      // Load more failed silently
     } finally {
       setLoadingMore(false);
     }

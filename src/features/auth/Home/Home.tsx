@@ -28,7 +28,7 @@ const Home: React.FC = () => {
           setInrRate(rate);
         }
       } catch (err) {
-        console.error("Failed to fetch exchange rate:", err);
+        // Failed to fetch exchange rate silently
       }
     };
     fetchRate();
@@ -41,7 +41,7 @@ const Home: React.FC = () => {
           setCryptoData(data);
         }
       } catch (error) {
-        console.error("Error fetching crypto data:", error);
+        // Error fetching crypto data silently
       } finally {
         setLoading(false);
       }

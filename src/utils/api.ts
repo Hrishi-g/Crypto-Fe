@@ -25,7 +25,7 @@ export async function fetchCsrfToken(forceRefresh = false) {
         cachedCsrfToken = data.token;
       }
     } catch (e) {
-      console.error('Failed to fetch CSRF token', e);
+      // Failed to fetch CSRF token silently
     }
   }
   return cachedCsrfToken;

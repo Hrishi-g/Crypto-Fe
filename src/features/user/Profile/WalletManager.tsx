@@ -160,7 +160,7 @@ const WalletManager: React.FC<WalletManagerProps> = ({ balance, onUpdateBalance 
                   body: JSON.stringify({ orderId: orderData.orderId })
                 });
               } catch (e) {
-                console.error("Failed to cancel payment in DB:", e);
+                // Failed to cancel payment in DB silently
               }
             }
           }

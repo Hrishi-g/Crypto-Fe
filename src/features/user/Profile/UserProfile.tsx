@@ -58,7 +58,7 @@ const UserProfile: React.FC = () => {
               }
           }
       } catch (e) {
-          console.error("Failed to fetch user profile", e);
+          // Failed to fetch user profile silently
       }
   };
 

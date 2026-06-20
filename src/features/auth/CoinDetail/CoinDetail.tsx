@@ -42,7 +42,9 @@ const CoinDetail: React.FC = () => {
   const displayCoinName = coinNameFromUrl || (id ? id.charAt(0).toUpperCase() + id.slice(1) : 'Coin');
   
   const navigate = useNavigate();
-  const context = useOutletContext<{ user: any }>();
+  const context = useOutletContext<{
+    setUser: ((u: any) => void) | undefined; user: any 
+}>();
   const user = context?.user;
   const [ticker, setTicker] = useState<BinanceTicker | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -323,6 +325,7 @@ const CoinDetail: React.FC = () => {
                 name={displayCoinName}
                 symbol={symbol || id + 'usdt'} 
                 user={user} 
+                setUser={context?.setUser}
                 ticker={ticker} 
                 inrRate={inrRate} 
                 tradeType={activePanel === 'buy' ? 'BUY' : 'SELL'}

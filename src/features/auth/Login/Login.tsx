@@ -61,7 +61,7 @@ const Login: React.FC = () => {
             setUser((prev: any) => ({ ...prev, ...profileData }));
           }
         } catch (profileErr) {
-          console.error('Failed to pre-cache user profile:', profileErr);
+          // Failed to pre-cache user profile silently
         }
         
         setMessage({ type: 'success', text: 'Login successful! Redirecting...' });
@@ -82,7 +82,7 @@ const Login: React.FC = () => {
             errorText = textData || errorText;
           }
         } catch (e) {
-          console.error("Error parsing response:", e);
+          // Error parsing response silently
         }
 
         setMessage({ type: 'error', text: errorText });
@@ -182,11 +182,11 @@ const Login: React.FC = () => {
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="auth-form">
             <div className="auth-group">
-              <label><User size={16} /> Username</label>
+              <label><User size={16} /> Email</label>
               <div className="auth-input-container">
                 <input 
                   {...register("username", { required: true })} 
-                  placeholder="Enter your username" 
+                  placeholder="Enter your email address" 
                   className={errors.username ? 'error' : ''}
                 />
               </div>

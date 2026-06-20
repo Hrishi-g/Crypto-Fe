@@ -58,8 +58,6 @@ const AppLayout = () => {
           const authData = await res.json();
           setUser(authData);
           
-          console.log("DEBUG: What is authData?", authData);
-          
           if (authData.hasPassword === false && !sessionStorage.getItem('skipPasswordPrompt')) {
             setShowPasswordPrompt(true);
           }
@@ -67,7 +65,7 @@ const AppLayout = () => {
            setUser(null);
         }
       } catch (err) {
-        console.error("Session check failed:", err);
+        // Session check failed silently
       }
     };
     

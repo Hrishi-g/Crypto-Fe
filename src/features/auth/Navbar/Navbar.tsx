@@ -29,7 +29,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
       setShowLogoutModal(false);
       navigate("/");
     } catch (error) {
-      console.error("Logout failed:", error);
+      // Logout failed silently
     }
   };
 

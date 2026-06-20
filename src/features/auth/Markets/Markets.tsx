@@ -47,7 +47,7 @@ const Markets: React.FC = () => {
           setCryptoData(data);
         }
       } catch (error) {
-        console.error("Error fetching all crypto data:", error);
+        // Error fetching all crypto data silently
       } finally {
         setLoading(false);
       }

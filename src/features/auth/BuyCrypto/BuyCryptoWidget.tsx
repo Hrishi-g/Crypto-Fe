@@ -24,13 +24,14 @@ interface BuyCryptoWidgetProps {
   name?: string;
   symbol?: string;
   user: any;
+  setUser?: (u: any) => void;
   ticker: BinanceTicker | null;
   inrRate: number | null;
   tradeType?: 'BUY' | 'SELL';
   onCancel: () => void;
 }
 
-const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, name, user, ticker, tradeType = 'BUY', onCancel }) => {
+const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, name, user, setUser, ticker, tradeType = 'BUY', onCancel }) => {
   const navigate = useNavigate();
   const [selectedHolding, setSelectedHolding] = useState<PortfolioItem | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -38,6 +39,7 @@ const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, name, user, ticke
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [idempotencyKey, setIdempotencyKey] = useState<string>(() => crypto.randomUUID());
   const queryClient = useQueryClient();
 
   const { data: userProfile } = useQuery({
@@ -103,7 +105,8 @@ const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, name, user, ticke
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...getCsrfHeaders()
+          ...getCsrfHeaders(),
+          'Idempotency-Key': idempotencyKey
         },
         body: JSON.stringify({ 
           userId: user?.id,
@@ -127,17 +130,33 @@ const BuyCryptoWidget: React.FC<BuyCryptoWidgetProps> = ({ id, name, user, ticke
 
       const responseText = await response.text();
       setSuccessMessage(responseText);
+
+      // Fetch and update global user state with latest balance/details
+      try {
+        const profileRes = await apiFetch(`${import.meta.env.VITE_BACKEND_URL}/user/profile`, { credentials: 'include' });
+        if (profileRes.ok) {
+          const latestProfile = await profileRes.json();
+          if (setUser) {
+            setUser(latestProfile);
+          }
+        }
+      } catch (err) {
+        // Failed to update user context after trade silently
+      }
+
       queryClient.invalidateQueries({ queryKey: ['userProfile', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['portfolio', user?.id] });
       setAmount('');
+      setIdempotencyKey(crypto.randomUUID());
       setTimeout(() => {
         setSuccessMessage(null);
         onCancel(); // return to stats grid
       }, 3000);
 
     } catch (err: any) {
-      console.error(err);
+      // Transaction execution failed silently
       setErrorMessage(err.message || 'Transaction failed. Please try again.');
+      setIdempotencyKey(crypto.randomUUID());
       setTimeout(() => setErrorMessage(null), 4000);
     } finally {
       setIsProcessing(false);

@@ -73,7 +73,7 @@ const Signup: React.FC = () => {
             errorText = textData || errorText;
           }
         } catch (parseError) {
-          console.error("Error parsing response:", parseError);
+          // Response parsing failed silently
         }
         
         setMessage({ type: 'error', text: errorText });
@@ -169,7 +169,8 @@ const Signup: React.FC = () => {
                   <div className="auth-input-container">
                     <input 
                       type={showPassword ? "text" : "password"} 
-                      {...register("password", { required: true, minLength: { value: 6, message: "Min 6 chars" } })} 
+                      {...register("password", { required: true, minLength: { value: 6, message: "Min 6 chars" } })}
+                      placeholder="User@123" 
                       className={errors.password ? 'error' : ''}
                     />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="auth-toggle">
@@ -187,6 +188,7 @@ const Signup: React.FC = () => {
                         required: true,
                         validate: (value) => value === password || "Match fail"
                       })} 
+                      placeholder="User@123"
                       className={errors.confirmPassword ? 'error' : ''}
                     />
                     <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="auth-toggle">

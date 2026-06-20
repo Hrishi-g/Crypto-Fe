@@ -37,6 +37,7 @@ const BuyCrypto: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [idempotencyKey, setIdempotencyKey] = useState<string>(() => crypto.randomUUID());
 
   const ws = useRef<WebSocket | null>(null);
 
@@ -147,7 +148,8 @@ const BuyCrypto: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...getCsrfHeaders()
+          ...getCsrfHeaders(),
+          'Idempotency-Key': idempotencyKey
         },
         body: JSON.stringify({ 
           userId: user?.id,
@@ -179,14 +181,15 @@ const BuyCrypto: React.FC = () => {
       }
       
       setAmount('');
+      setIdempotencyKey(crypto.randomUUID());
       setTimeout(() => {
         setSuccessMessage(null);
         navigate('/portfolio');
       }, 3000);
 
     } catch (err: any) {
-      console.error(err);
       setErrorMessage(err.message || 'Transaction failed. Please try again.');
+      setIdempotencyKey(crypto.randomUUID());
       setTimeout(() => setErrorMessage(null), 4000);
     } finally {
       setIsProcessing(false);

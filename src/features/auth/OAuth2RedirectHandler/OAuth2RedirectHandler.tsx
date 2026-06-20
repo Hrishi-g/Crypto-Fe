@@ -36,7 +36,7 @@ const OAuth2RedirectHandler: React.FC = () => {
               setUser(authData); // Update global state instantly
             }
           } catch (e) {
-            console.error("Failed to fetch user session after OAuth exchange", e);
+            // Failed to fetch user session after OAuth exchange silently
           }
           // Navigate instantly without a hard reload
           navigate('/');
@@ -46,7 +46,7 @@ const OAuth2RedirectHandler: React.FC = () => {
         }
       })
       .catch(err => {
-        console.error('OAuth token handoff failed:', err);
+        // OAuth token handoff failed silently
         setError('Network error during authentication handoff.');
         setTimeout(() => navigate('/login'), 3000);
       });
