@@ -45,7 +45,7 @@ const OAuth2RedirectHandler: React.FC = () => {
           setTimeout(() => navigate('/login'), 3000);
         }
       })
-      .catch(err => {
+      .catch(() => {
         // OAuth token handoff failed silently
         setError('Network error during authentication handoff.');
         setTimeout(() => navigate('/login'), 3000);
